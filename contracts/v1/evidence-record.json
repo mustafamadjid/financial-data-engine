@@ -1,0 +1,38 @@
+{
+  "contract": "evidence_record",
+  "version": "1.0.0",
+  "description": "Evidence reference linking structured data to original source.",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "filing_id",
+    "source_document",
+    "extraction_method"
+  ],
+  "properties": {
+    "evidence_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "source_document": { "type": "string", "nullable": false },
+    "source_section": { "type": "string", "nullable": true },
+    "page": { "type": "integer", "nullable": true },
+    "source_concept": { "type": "string", "nullable": true },
+    "context_ref": { "type": "string", "nullable": true },
+    "text_reference": { "type": "string", "nullable": true },
+    "extraction_method": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["XBRL", "IXBRL", "XLSX", "PDF_MANUAL_REVIEW", "OTHER"]
+    }
+  },
+  "example": {
+    "evidence_id": "evidence_01",
+    "filing_id": "filing_01",
+    "source_document": "2026-Q2.pdf",
+    "source_section": "Bank Loans",
+    "page": 87,
+    "source_concept": null,
+    "context_ref": null,
+    "text_reference": "Disclosure describing term loan from Bank ABC.",
+    "extraction_method": "PDF_MANUAL_REVIEW"
+  }
+}

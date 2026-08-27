@@ -1,0 +1,21 @@
+{
+  "contract": "xbrl_dimension",
+  "version": "1.0.0",
+  "description": "Dimension/member attached to an XBRL context.",
+  "type": "object",
+  "required": ["dimension_id", "context_id", "axis"],
+  "properties": {
+    "dimension_id": { "type": "string", "nullable": false },
+    "context_id": { "type": "string", "nullable": false },
+    "axis": { "type": "string", "nullable": false },
+    "member": { "type": "string", "nullable": true },
+    "typed_value": { "type": "string", "nullable": true }
+  },
+  "example": {
+    "dimension_id": "dim_01",
+    "context_id": "ctx_01",
+    "axis": "BusinessSegmentAxis",
+    "member": "GoldSegmentMember",
+    "typed_value": null
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "contract": "debt_record",
+  "version": "1.0.0",
+  "description": "Normalized debt/facility information with evidence linkage.",
+  "type": "object",
+  "required": [
+    "debt_record_id",
+    "filing_id",
+    "borrower",
+    "classification",
+    "classification_status",
+    "evidence_ids"
+  ],
+  "properties": {
+    "debt_record_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "borrower": { "type": "string", "nullable": false },
+    "creditor": { "type": "string", "nullable": true },
+    "facility": { "type": "string", "nullable": true },
+    "outstanding_amount": { "type": "string", "nullable": true },
+    "limit_amount": { "type": "string", "nullable": true },
+    "currency": { "type": "string", "nullable": true },
+    "interest_or_profit_rate": { "type": "string", "nullable": true },
+    "maturity_date": { "type": "string", "format": "date", "nullable": true },
+    "collateral": { "type": "string", "nullable": true },
+    "purpose": { "type": "string", "nullable": true },
+    "classification": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["CONVENTIONAL", "ISLAMIC", "MIXED", "UNDETERMINED"]
+    },
+    "classification_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["SUPPORTED_BY_EVIDENCE", "REVIEW_REQUIRED", "UNDETERMINED"]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "nullable": false,
+      "items": { "type": "string" }
+    }
+  },
+  "example": {
+    "debt_record_id": "debt_01",
+    "filing_id": "filing_01",
+    "borrower": "PT Example Tbk",
+    "creditor": "Bank ABC",
+    "facility": "Term Loan",
+    "outstanding_amount": "500000000000",
+    "limit_amount": null,
+    "currency": "IDR",
+    "interest_or_profit_rate": "0.07",
+    "maturity_date": "2029-12-31",
+    "collateral": null,
+    "purpose": null,
+    "classification": "CONVENTIONAL",
+    "classification_status": "SUPPORTED_BY_EVIDENCE",
+    "evidence_ids": ["evidence_01"]
+  }
+}

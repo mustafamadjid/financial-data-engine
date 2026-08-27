@@ -1,0 +1,35 @@
+{
+  "contract": "status_enums",
+  "version": "1.0.0",
+  "description": "Shared status vocabularies used across HISSA financial data contracts.",
+  "type": "object",
+  "required": ["statuses"],
+  "properties": {
+    "statuses": {
+      "type": "object",
+      "nullable": false,
+      "description": "Named, documented status domains."
+    }
+  },
+  "statuses": {
+    "data_availability": [
+      "AVAILABLE",
+      "NOT_DISCLOSED",
+      "NOT_APPLICABLE",
+      "UNKNOWN"
+    ],
+    "review": ["PENDING", "VERIFIED", "REVIEW_REQUIRED", "FAILED"],
+    "mapping": ["DRAFT", "APPROVED", "REJECTED", "UNMAPPED", "REVIEW_REQUIRED"],
+    "classification": [
+      "SUPPORTED_BY_EVIDENCE",
+      "REVIEW_REQUIRED",
+      "UNDETERMINED"
+    ]
+  },
+  "example": {
+    "data_availability": "NOT_DISCLOSED",
+    "review": "REVIEW_REQUIRED",
+    "mapping": "UNMAPPED",
+    "classification": "UNDETERMINED"
+  }
+}

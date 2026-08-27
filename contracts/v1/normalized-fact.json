@@ -1,0 +1,70 @@
+{
+  "contract": "normalized_fact",
+  "version": "1.0.0",
+  "description": "Canonical HISSA financial fact derived from raw XBRL fact.",
+  "type": "object",
+  "required": [
+    "normalized_fact_id",
+    "filing_id",
+    "raw_fact_id",
+    "canonical_concept",
+    "value",
+    "data_type",
+    "mapping_rule_id",
+    "normalization_status"
+  ],
+  "properties": {
+    "normalized_fact_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "raw_fact_id": { "type": "string", "nullable": false },
+    "issuer_code": { "type": "string", "nullable": false },
+    "period": { "type": "string", "nullable": true },
+    "period_start": { "type": "string", "format": "date", "nullable": true },
+    "period_end": { "type": "string", "format": "date", "nullable": true },
+    "canonical_concept": { "type": "string", "nullable": false },
+    "value": { "type": "string", "nullable": true },
+    "currency": { "type": "string", "nullable": true },
+    "scope": {
+      "type": "string",
+      "nullable": true,
+      "enum": ["CONSOLIDATED", "PARENT", "UNKNOWN"]
+    },
+    "data_type": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["REPORTED", "DERIVED"]
+    },
+    "source_concept": { "type": "string", "nullable": false },
+    "mapping_rule_id": { "type": "string", "nullable": false },
+    "mapping_rule_version": { "type": "integer", "nullable": false },
+    "normalization_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["NORMALIZED", "UNMAPPED", "REVIEW_REQUIRED", "FAILED"]
+    },
+    "validation_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["PENDING", "VERIFIED", "REVIEW_REQUIRED", "FAILED"]
+    }
+  },
+  "example": {
+    "normalized_fact_id": "nf_01",
+    "filing_id": "filing_01",
+    "raw_fact_id": "fact_01",
+    "issuer_code": "ANTM",
+    "period": "2026-Q2",
+    "period_start": null,
+    "period_end": "2026-06-30",
+    "canonical_concept": "total_assets",
+    "value": "42800000000000",
+    "currency": "IDR",
+    "scope": "CONSOLIDATED",
+    "data_type": "REPORTED",
+    "source_concept": "Assets",
+    "mapping_rule_id": "map_01",
+    "mapping_rule_version": 1,
+    "normalization_status": "NORMALIZED",
+    "validation_status": "PENDING"
+  }
+}

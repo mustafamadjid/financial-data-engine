@@ -1,0 +1,27 @@
+{
+  "contract": "xbrl_unit",
+  "version": "1.0.0",
+  "description": "Unit definition associated with XBRL facts.",
+  "type": "object",
+  "required": ["unit_id", "filing_id", "unit_type"],
+  "properties": {
+    "unit_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "source_unit_id": { "type": "string", "nullable": false },
+    "unit_type": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["CURRENCY", "SHARES", "RATIO", "PURE", "CUSTOM", "UNKNOWN"]
+    },
+    "measure": { "type": "string", "nullable": true },
+    "currency": { "type": "string", "nullable": true }
+  },
+  "example": {
+    "unit_id": "unit_01",
+    "filing_id": "filing_01",
+    "source_unit_id": "IDR",
+    "unit_type": "CURRENCY",
+    "measure": "iso4217:IDR",
+    "currency": "IDR"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "contract": "filing_metadata",
+  "version": "1.0.0",
+  "description": "Metadata and source identity for one IDX filing.",
+  "type": "object",
+  "required": [
+    "filing_id",
+    "issuer_code",
+    "period_end",
+    "source_url",
+    "source_type",
+    "source_hash",
+    "revision_number"
+  ],
+  "properties": {
+    "filing_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Stable unique identifier for the filing."
+    },
+    "issuer_code": {
+      "type": "string",
+      "nullable": false,
+      "description": "IDX issuer/ticker code."
+    },
+    "report_type": {
+      "type": "string",
+      "nullable": true,
+      "enum": ["ANNUAL", "QUARTERLY", "INTERIM", "OTHER"],
+      "description": "Reporting type if identifiable."
+    },
+    "fiscal_year": {
+      "type": "integer",
+      "nullable": true,
+      "description": "Fiscal year represented by the filing."
+    },
+    "fiscal_period": {
+      "type": "string",
+      "nullable": true,
+      "description": "Reporting period such as Q1, Q2, Q3, FY."
+    },
+    "period_start": { "type": "string", "format": "date", "nullable": true },
+    "period_end": { "type": "string", "format": "date", "nullable": false },
+    "source_url": { "type": "string", "nullable": false },
+    "source_type": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["XBRL_INSTANCE", "INLINE_XBRL", "XLSX", "PDF", "OTHER"]
+    },
+    "storage_path": { "type": "string", "nullable": true },
+    "source_hash": {
+      "type": "string",
+      "nullable": false,
+      "description": "Cryptographic hash of original artifact."
+    },
+    "revision_number": { "type": "integer", "nullable": false },
+    "supersedes_filing_id": { "type": "string", "nullable": true },
+    "discovered_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+    },
+    "downloaded_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+    }
+  },
+  "example": {
+    "filing_id": "filing_01",
+    "issuer_code": "ANTM",
+    "report_type": "QUARTERLY",
+    "fiscal_year": 2026,
+    "fiscal_period": "Q2",
+    "period_start": "2026-01-01",
+    "period_end": "2026-06-30",
+    "source_url": "https://example.idx/filing",
+    "source_type": "XBRL_INSTANCE",
+    "storage_path": "filings/ANTM/2026-Q2/instance.zip",
+    "source_hash": "sha256:example",
+    "revision_number": 1,
+    "supersedes_filing_id": null,
+    "discovered_at": "2026-08-27T10:00:00+07:00",
+    "downloaded_at": "2026-08-27T10:01:00+07:00"
+  }
+}

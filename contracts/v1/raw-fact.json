@@ -1,0 +1,53 @@
+{
+  "contract": "raw_fact",
+  "version": "1.0.0",
+  "description": "One raw financial fact extracted from source XBRL.",
+  "type": "object",
+  "required": [
+    "raw_fact_id",
+    "filing_id",
+    "source_concept",
+    "context_ref",
+    "raw_value"
+  ],
+  "properties": {
+    "raw_fact_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "source_concept": { "type": "string", "nullable": false },
+    "source_namespace": { "type": "string", "nullable": true },
+    "raw_value": {
+      "type": "string",
+      "nullable": false,
+      "description": "Original lexical value extracted from source."
+    },
+    "normalized_numeric_value": {
+      "type": "string",
+      "nullable": true,
+      "description": "Parsed decimal value without losing precision."
+    },
+    "context_ref": { "type": "string", "nullable": false },
+    "unit_ref": { "type": "string", "nullable": true },
+    "decimals": { "type": "string", "nullable": true },
+    "precision": { "type": "string", "nullable": true },
+    "is_nil": { "type": "boolean", "nullable": false },
+    "fact_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["EXTRACTED", "UNSUPPORTED", "PARSE_ERROR"]
+    }
+  },
+  "example": {
+    "raw_fact_id": "fact_01",
+    "filing_id": "filing_01",
+    "source_concept": "Assets",
+    "source_namespace": "idx",
+    "raw_value": "42800000000000",
+    "normalized_numeric_value": "42800000000000",
+    "context_ref": "ctx_01",
+    "unit_ref": "unit_01",
+    "decimals": "-6",
+    "precision": null,
+    "is_nil": false,
+    "fact_status": "EXTRACTED"
+  }
+}

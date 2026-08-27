@@ -1,0 +1,10 @@
+{
+  "contract": "mapping_rule", "version": "1.0.0", "description": "Rule mapping IDX/XBRL source concept to HISSA canonical concept.", "type": "object",
+  "required": ["mapping_rule_id", "source_concept", "canonical_concept", "status", "rule_version"],
+  "properties": {
+    "mapping_rule_id": {"type": "string", "nullable": false}, "source_concept": {"type": "string", "nullable": false}, "entry_point": {"type": "string", "nullable": true}, "canonical_concept": {"type": "string", "nullable": false},
+    "allowed_scope": {"type": "array", "nullable": true, "items": {"type": "string"}}, "period_type": {"type": "string", "nullable": true, "enum": ["INSTANT", "DURATION"]}, "sign_convention": {"type": "string", "nullable": true},
+    "status": {"type": "string", "nullable": false, "enum": ["DRAFT", "APPROVED", "REJECTED", "REVIEW_REQUIRED"]}, "rationale": {"type": "string", "nullable": true}, "reviewer": {"type": "string", "nullable": true}, "rule_version": {"type": "integer", "nullable": false}
+  },
+  "example": {"mapping_rule_id": "map_01", "source_concept": "Assets", "entry_point": "general", "canonical_concept": "total_assets", "allowed_scope": ["CONSOLIDATED"], "period_type": "INSTANT", "sign_convention": "AS_REPORTED", "status": "APPROVED", "rationale": "Represents total consolidated assets.", "reviewer": "DA-2", "rule_version": 1}
+}

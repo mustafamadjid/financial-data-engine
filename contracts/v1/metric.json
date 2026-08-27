@@ -1,0 +1,47 @@
+{
+  "contract": "fundamental_metric",
+  "version": "1.0.0",
+  "description": "Derived financial metric calculated from normalized facts.",
+  "type": "object",
+  "required": [
+    "metric_id",
+    "filing_id",
+    "issuer_code",
+    "metric_code",
+    "value",
+    "formula_version",
+    "calculation_status"
+  ],
+  "properties": {
+    "metric_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "issuer_code": { "type": "string", "nullable": false },
+    "period": { "type": "string", "nullable": true },
+    "metric_code": { "type": "string", "nullable": false },
+    "value": { "type": "string", "nullable": true },
+    "unit": { "type": "string", "nullable": true },
+    "formula_version": { "type": "integer", "nullable": false },
+    "input_fact_ids": {
+      "type": "array",
+      "nullable": false,
+      "items": { "type": "string" }
+    },
+    "calculation_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["CALCULATED", "INSUFFICIENT_DATA", "REVIEW_REQUIRED", "FAILED"]
+    }
+  },
+  "example": {
+    "metric_id": "metric_01",
+    "filing_id": "filing_01",
+    "issuer_code": "ANTM",
+    "period": "2026-Q2",
+    "metric_code": "roe",
+    "value": "0.12",
+    "unit": "RATIO",
+    "formula_version": 1,
+    "input_fact_ids": ["nf_01"],
+    "calculation_status": "CALCULATED"
+  }
+}

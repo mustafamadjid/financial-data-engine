@@ -1,0 +1,54 @@
+{
+  "contract": "validation_result",
+  "version": "1.0.0",
+  "description": "Result produced by one validation rule execution.",
+  "type": "object",
+  "required": [
+    "validation_result_id",
+    "filing_id",
+    "rule_code",
+    "rule_version",
+    "result",
+    "severity"
+  ],
+  "properties": {
+    "validation_result_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "normalized_fact_ids": {
+      "type": "array",
+      "nullable": true,
+      "items": { "type": "string" }
+    },
+    "rule_code": { "type": "string", "nullable": false },
+    "rule_version": { "type": "integer", "nullable": false },
+    "result": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["PASS", "FAIL", "REVIEW_REQUIRED", "SKIPPED"]
+    },
+    "severity": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["ERROR", "WARN", "INFO"]
+    },
+    "message": { "type": "string", "nullable": true },
+    "expected_value": { "type": "string", "nullable": true },
+    "actual_value": { "type": "string", "nullable": true },
+    "tolerance": { "type": "string", "nullable": true },
+    "checked_at": { "type": "string", "format": "date-time", "nullable": false }
+  },
+  "example": {
+    "validation_result_id": "vr_01",
+    "filing_id": "filing_01",
+    "normalized_fact_ids": ["nf_01"],
+    "rule_code": "BS-001",
+    "rule_version": 1,
+    "result": "PASS",
+    "severity": "INFO",
+    "message": "Balance sheet equation is within tolerance.",
+    "expected_value": "42800000000000",
+    "actual_value": "42800000000000",
+    "tolerance": "1000000",
+    "checked_at": "2026-08-27T10:30:00+07:00"
+  }
+}

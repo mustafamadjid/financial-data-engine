@@ -1,0 +1,43 @@
+{
+  "contract": "xbrl_context",
+  "version": "1.0.0",
+  "description": "XBRL context associated with one or more facts.",
+  "type": "object",
+  "required": ["context_id", "filing_id", "entity_identifier", "period_type"],
+  "properties": {
+    "context_id": { "type": "string", "nullable": false },
+    "filing_id": { "type": "string", "nullable": false },
+    "source_context_id": { "type": "string", "nullable": false },
+    "entity_identifier": { "type": "string", "nullable": false },
+    "scope": {
+      "type": "string",
+      "nullable": true,
+      "enum": ["CONSOLIDATED", "PARENT", "UNKNOWN"]
+    },
+    "period_type": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["INSTANT", "DURATION", "FOREVER"]
+    },
+    "instant_date": { "type": "string", "format": "date", "nullable": true },
+    "start_date": { "type": "string", "format": "date", "nullable": true },
+    "end_date": { "type": "string", "format": "date", "nullable": true },
+    "context_status": {
+      "type": "string",
+      "nullable": false,
+      "enum": ["RESOLVED", "REVIEW_REQUIRED", "INVALID"]
+    }
+  },
+  "example": {
+    "context_id": "ctx_01",
+    "filing_id": "filing_01",
+    "source_context_id": "CurrentYearConsolidated",
+    "entity_identifier": "ANTM",
+    "scope": "CONSOLIDATED",
+    "period_type": "INSTANT",
+    "instant_date": "2026-06-30",
+    "start_date": null,
+    "end_date": null,
+    "context_status": "RESOLVED"
+  }
+}
