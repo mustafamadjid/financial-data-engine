@@ -1,0 +1,1 @@
+"""Contract-oriented XBRL extractors."""
