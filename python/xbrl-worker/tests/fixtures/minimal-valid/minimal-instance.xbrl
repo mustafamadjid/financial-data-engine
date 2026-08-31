@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:ex="http://example.com/ex" xmlns:iso4217="http://www.xbrl.org/2003/iso4217" xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:schemaRef xlink:type="simple" xlink:href="minimal.xsd"/>
+ <xbrli:context id="c1"><xbrli:entity><xbrli:identifier scheme="urn:test">TEST</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period></xbrli:context>
+ <xbrli:unit id="u1"><xbrli:measure>iso4217:IDR</xbrli:measure></xbrli:unit>
+ <ex:Assets contextRef="c1" unitRef="u1" decimals="-6">42800000000000</ex:Assets>
+</xbrli:xbrl>
