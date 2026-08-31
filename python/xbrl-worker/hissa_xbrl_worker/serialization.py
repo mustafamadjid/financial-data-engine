@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 def serialize_payload(payload: dict[str, object], pretty: bool = False) -> str:
     started = time.perf_counter()
-    log_event(logger, logging.DEBUG, "serialization.started", "Parser payload serialization started.")
+    log_event(logger, logging.DEBUG, "serialization_started", component="io")
     serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2 if pretty else None, separators=None if pretty else (",", ":"))
-    log_event(logger, logging.INFO, "serialization.completed", "Parser payload serialization completed.", duration_ms=round((time.perf_counter() - started) * 1000, 3), payload_bytes=len(serialized.encode("utf-8")))
+    log_event(logger, logging.DEBUG, "serialization_completed", component="io", duration_ms=round((time.perf_counter() - started) * 1000, 3), payload_bytes=len(serialized.encode("utf-8")))
     return serialized
 
 def sha256_file(path: Path) -> str:

@@ -1,4 +1,6 @@
 import json
+import re
+import sys
 from pathlib import Path
 
 from hissa_xbrl_worker.cli import main
@@ -9,7 +11,7 @@ INVALID_FIXTURE = Path(__file__).parent / "fixtures" / "invalid" / "malformed.xm
 
 
 def _lines(raw: str):
-    return [json.loads(line) for line in raw.splitlines() if line.strip()]
+    return [line for line in raw.splitlines() if line.strip()]
 
 
 def test_cli_emits_structured_logs_to_stderr_and_keeps_stdout_json(capsys):
@@ -24,12 +26,11 @@ def test_cli_emits_structured_logs_to_stderr_and_keeps_stdout_json(capsys):
     assert payload["status"] == "SUCCESS"
     assert "correlation_id" not in payload
     assert logs
-    assert all(item["correlation_id"] == "job-123" for item in logs)
-    assert all(item["schema"] == "hissa_parser_log" for item in logs)
-    assert "parser.started" in {item["event"] for item in logs}
-    assert "parser.completed" in {item["event"] for item in logs}
-    events = {item["event"] for item in logs}
-    assert {"extract.contexts.started", "extract.units.started", "extract.dimensions.started", "extract.facts.started"}.issubset(events)
+    assert all(re.match(r"^\d{2}:\d{2}:\d{2} (DEBUG|INFO |WARN |ERROR|CRITICAL) \[.+\] [a-z0-9_]+", line) for line in logs)
+    assert any("[worker] started version=" in line for line in logs)
+    assert any("[xbrl] parse_started filing=logging-cli file=minimal-instance.xbrl" in line for line in logs)
+    assert any("[xbrl] parse_completed filing=logging-cli facts=" in line for line in logs)
+    assert all("contexts=[" not in line and "facts=[" not in line for line in logs)
 
 
 def test_log_level_does_not_change_parser_stdout(capsys):
@@ -42,6 +43,19 @@ def test_log_level_does_not_change_parser_stdout(capsys):
     assert json.loads(error_output) == json.loads(debug_output)
 
 
+def test_cli_keeps_terminal_output_to_formatted_logs_only(capsys, monkeypatch):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+
+    assert main([
+        "--input", str(FIXTURE), "--filing-id", "terminal-only"
+    ]) == 0
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "[xbrl] parse_completed filing=terminal-only" in captured.err
+    assert "{\"contexts\"" not in captured.err
+
+
 def test_cli_failure_keeps_stdout_json_and_stderr_structured(capsys):
     assert main(["--input", str(INVALID_FIXTURE), "--filing-id", "broken", "--correlation-id", "job-error"]) == 11
 
@@ -51,5 +65,5 @@ def test_cli_failure_keeps_stdout_json_and_stderr_structured(capsys):
 
     assert payload["status"] == "FAILED"
     assert payload["errors"][0]["code"] == "UNSUPPORTED_DOCUMENT"
-    assert "arelle.load.failed" in {item["event"] for item in logs}
-    assert "parser.failed" in {item["event"] for item in logs}
+    assert any("[arelle] arelle_load_failed" in line for line in logs)
+    assert any("[xbrl] parse_failed filing=broken code=UNSUPPORTED_DOCUMENT" in line for line in logs)

@@ -28,9 +28,19 @@ def extract_facts(model_xbrl, filing_id: str, context_id_map: dict[str, str], un
         if status == "PARSE_ERROR":
             warning_counts["FACT_PARSE_ERROR"] = warning_counts.get("FACT_PARSE_ERROR", 0) + 1
             if warning_counts["FACT_PARSE_ERROR"] <= 20:
-                log_event(logger, logging.WARNING, "fact.parse_error", "Fact could not be parsed as numeric value.", raw_fact_id=make_fact_id(fp, occurrence), source_concept=local, source_namespace=ns, context_ref=context_source, unit_ref=unit_source, error_code="FACT_PARSE_ERROR")
+                log_event(
+                    logger,
+                    logging.WARNING,
+                    "fact_parse_error",
+                    "Fact could not be parsed as numeric value.",
+                    component="xbrl",
+                    filing_id=filing_id,
+                    source_context_id=context_source,
+                    source_unit_id=unit_source,
+                    error_code="FACT_PARSE_ERROR",
+                )
         result.append({"raw_fact_id": make_fact_id(fp, occurrence), "filing_id": filing_id, "source_concept": local, "source_namespace": ns, "raw_value": raw, "normalized_numeric_value": numeric_value, "context_ref": context_id_map[context_source], "unit_ref": unit_id_map.get(unit_source) if unit_source else None, "decimals": str(getattr(fact, "decimals", "")) if getattr(fact, "decimals", None) is not None else None, "precision": str(getattr(fact, "precision", "")) if getattr(fact, "precision", None) is not None else None, "is_nil": nil, "fact_status": status})
     for warning_type, count in warning_counts.items():
         if count > 20:
-            log_event(logger, logging.WARNING, "fact.warning_suppressed", "Repeated fact warnings were suppressed.", warning_type=warning_type, suppressed_count=count - 20)
+            log_event(logger, logging.WARNING, "fact_warning_suppressed", "Repeated fact warnings were suppressed.", component="xbrl", filing_id=filing_id, warning_type=warning_type, suppressed_count=count - 20)
     return sorted(result, key=lambda x: x["raw_fact_id"])

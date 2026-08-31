@@ -48,7 +48,7 @@ def test_extract_facts_marks_numeric_parse_error_without_logging_raw_value():
         records = extract_facts(model, "filing-1", {"c1": "ctx-1"}, {"u1": "unit-1"})
 
     assert records[0]["fact_status"] == "PARSE_ERROR"
-    assert emit_log.call_args.args[2:4] == ("fact.parse_error", "Fact could not be parsed as numeric value.")
+    assert emit_log.call_args.args[2:4] == ("fact_parse_error", "Fact could not be parsed as numeric value.")
     assert bad_value not in repr(emit_log.call_args)
 
 
@@ -60,8 +60,8 @@ def test_extract_facts_suppresses_repeated_parse_warnings_after_twenty():
 
     assert len(records) == 25
     events = [call.args[2] for call in emit_log.call_args_list]
-    assert events.count("fact.parse_error") == 20
-    assert events.count("fact.warning_suppressed") == 1
+    assert events.count("fact_parse_error") == 20
+    assert events.count("fact_warning_suppressed") == 1
     assert emit_log.call_args_list[-1].kwargs["suppressed_count"] == 5
 
 
