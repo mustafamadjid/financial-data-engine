@@ -21,6 +21,33 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Development
+
+### Prerequisites
+
+- PHP and Composer for Laravel.
+- [Bun 1.3.14](https://bun.sh) for frontend tooling.
+
+### Installation
+
+```bash
+composer install
+bun install --frozen-lockfile
+```
+
+### Daily commands
+
+```bash
+# Run the Vite development server.
+bun run dev
+
+# Create production Vite assets.
+bun run build
+
+# Run Laravel, the queue worker, and Vite together.
+composer run dev
+```
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
