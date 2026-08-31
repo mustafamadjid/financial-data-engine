@@ -2,9 +2,10 @@
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "packageManager": "bun@1.3.14",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "build": "bunx --bun vite build",
+        "dev": "bunx --bun vite"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
