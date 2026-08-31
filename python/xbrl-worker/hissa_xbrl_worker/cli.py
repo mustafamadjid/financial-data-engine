@@ -53,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:
         log_event(logger, logging.ERROR, "parser.failed", "XBRL parser execution failed.", error_code="INTERNAL_ERROR", exit_code=20, duration_ms=round((time.perf_counter() - started) * 1000, 3))
         result = build_failure_payload(args.filing_id if args else "", Path(args.input) if args else Path(""), "INTERNAL_ERROR", "Unexpected internal parser error."); code = 20
-    try: sys.stdout.write(serialize_payload(result, bool('args' in locals() and args.pretty)) + "\n")
+    try: sys.stdout.write(serialize_payload(result, bool(args and args.pretty)) + "\n")
     except Exception:
         sys.stdout.write(json.dumps(build_failure_payload("", Path(""), "SERIALIZATION_ERROR", "Unable to serialize parser result."), separators=(",", ":")) + "\n"); code = 14
     finally:

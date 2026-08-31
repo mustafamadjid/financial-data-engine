@@ -8,6 +8,9 @@ from hissa_xbrl_worker.logging_config import (
     JsonLogFormatter,
     configure_logging,
     parse_log_level,
+    sanitize_log_value,
+    sanitize_debug_text,
+    utc_timestamp,
 )
 
 
@@ -59,3 +62,29 @@ def test_parse_log_level_rejects_unknown_value():
     with pytest.raises(ValueError):
         parse_log_level("verbose")
 
+
+def test_formatter_uses_fallback_event_and_sanitizes_absolute_path_in_message():
+    record = logging.LogRecord(
+        name="third.party", level=logging.WARNING, pathname=__file__, lineno=1,
+        msg="Could not open C:\\Users\\secret\\filing.xbrl", args=(), exc_info=None,
+    )
+
+    payload = json.loads(JsonLogFormatter().format(record))
+
+    assert payload["event"] == "log.message"
+    assert "C:\\Users\\secret" not in payload["message"]
+
+
+def test_utc_timestamp_is_utc_iso8601():
+    timestamp = utc_timestamp()
+
+    assert timestamp.endswith("Z")
+    assert "T" in timestamp
+
+
+def test_sanitize_debug_text_redacts_path_like_text():
+    assert "C:\\Users\\user" not in sanitize_debug_text("source C:\\Users\\user\\file.xbrl")
+
+
+def test_sanitize_log_value_converts_tuples_recursively():
+    assert sanitize_log_value(("safe", {"token": "secret"})) == ["safe", {"token": "[REDACTED]"}]
