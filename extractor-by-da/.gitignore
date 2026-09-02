@@ -1,0 +1,24 @@
+# Track only the DA-1 handover package listed below.
+/*
+
+!/.gitignore
+!/README.md
+!/requirements.txt
+
+# Required documentation
+!/docs/
+/docs/*
+!/docs/idx-taxonomy-notes.md
+!/docs/source-issues.md
+
+# Re-runnable extractor
+!/scripts/
+/scripts/*
+!/scripts/extract_xbrl.py
+
+# Required extracted outputs
+!/data/
+/data/*
+!/data/extracted/
+/data/extracted/*
+!/data/raw/
