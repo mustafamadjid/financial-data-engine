@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DisclosureSystems
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="../../../../config/disclosuresystems.xsd">
+    <!-- see arelle/config/disclosuresystems.xml for full comments -->
+    <DisclosureSystem
+            names="arl-2022-preview"
+            description="Validates rules for ÅRL (Årsregnskabsloven), Danish Financial Statements Act"
+            validationType="DBA"
+    />
+    <DisclosureSystem
+            names="arl-2024-preview"
+            description="Validates rules for ÅRL (Årsregnskabsloven), Danish Financial Statements Act"
+            validationType="DBA"
+    />
+    <DisclosureSystem
+            names="arl-2025-preview"
+            description="Validates rules for ÅRL (Årsregnskabsloven), Danish Financial Statements Act"
+            validationType="DBA"
+    />
+    <DisclosureSystem
+            names="arl-2024-multi-target-preview"
+            description="Checks for 2024 multi-target rules"
+            validationType="DBA"
+    />
+    <DisclosureSystem
+            names="arl-2025-multi-target-preview"
+            description="Checks for 2025 multi-target rules"
+            validationType="DBA"
+    />
+    <DisclosureSystem
+            names="dkfin-2024-multi-target-preview"
+            description="Checks for dkfin 2024 multi-target rules"
+            validationType="DBA"
+    />
+</DisclosureSystems>

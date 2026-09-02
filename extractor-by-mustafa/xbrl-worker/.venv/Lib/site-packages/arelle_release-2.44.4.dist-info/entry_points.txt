@@ -1,0 +1,5 @@
+[console_scripts]
+arelleCmdLine = arelle.CntlrCmdLine:main
+
+[gui_scripts]
+arelleGUI = arelle.CntlrWinMain:main
