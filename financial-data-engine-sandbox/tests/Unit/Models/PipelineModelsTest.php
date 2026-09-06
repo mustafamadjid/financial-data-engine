@@ -28,7 +28,7 @@ it('maps pipeline job runs to its migration schema', function () {
         ])
         ->and($model->getCasts())->toMatchArray([
             'pipeline_run_id' => 'integer',
-            'filing_id' => 'integer',
+            'filing_id' => 'string',
             'attempt' => 'integer',
             'error_context' => 'array',
             'started_at' => 'datetime',

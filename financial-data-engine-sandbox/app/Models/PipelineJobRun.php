@@ -13,7 +13,7 @@ class PipelineJobRun extends Model
     {
         return [
             'pipeline_run_id' => 'integer',
-            'filing_id' => 'integer',
+            'filing_id' => 'string',
             'attempt' => 'integer',
             'error_context' => 'array',
             'started_at' => 'datetime',

@@ -13,7 +13,7 @@ class PipelineRun extends Model
     protected function casts(): array
     {
         return [
-            'filing_id' => 'integer',
+            'filing_id' => 'string',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
         ];

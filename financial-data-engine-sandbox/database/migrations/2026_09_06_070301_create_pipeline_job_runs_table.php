@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->unsignedBigInteger('pipeline_run_id');
-            $table->unsignedBigInteger('filing_id');
+            $table->string('filing_id', 128);
 
             $table->string('stage', 50);
             $table->string('job_class');
@@ -75,6 +75,11 @@ return new class extends Migration
                 ['idempotency_key', 'attempt'],
                 'pipeline_job_runs_idempotency_attempt_unique'
             );
+
+            $table->foreign('filing_id')
+                ->references('filing_id')
+                ->on('filings')
+                ->restrictOnDelete();
         });
     }
 

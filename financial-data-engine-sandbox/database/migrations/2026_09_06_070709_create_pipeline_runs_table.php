@@ -11,8 +11,11 @@ return new class extends Migration
         Schema::create('pipeline_runs', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('filing_id')
-                ->constrained('filings')
+            $table->string('filing_id', 128);
+
+            $table->foreign('filing_id')
+                ->references('filing_id')
+                ->on('filings')
                 ->restrictOnDelete();
 
             $table->string('trigger', 50);

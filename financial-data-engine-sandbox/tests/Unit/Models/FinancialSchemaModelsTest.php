@@ -90,7 +90,7 @@ it('maps pipeline runs to its migration schema', function () {
             'filing_id', 'trigger', 'status', 'correlation_id', 'started_at', 'finished_at',
         ])
         ->and($model->getCasts())->toMatchArray([
-            'filing_id' => 'integer',
+            'filing_id' => 'string',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
         ]);
