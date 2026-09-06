@@ -73,4 +73,18 @@ return [
         'temporary_path' => env('FINANCIAL_PIPELINE_TEMPORARY_PATH', 'financial-pipeline/tmp'),
         'published_path' => env('FINANCIAL_PIPELINE_PUBLISHED_PATH', 'financial-pipeline/published'),
     ],
+
+    'download' => [
+        'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_DOWNLOAD_ALLOWED_HOSTS', 'example.test'))))),
+        'http_timeout' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_HTTP_TIMEOUT', 30),
+        'connect_timeout' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_CONNECT_TIMEOUT', 10),
+        'max_bytes' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_MAX_BYTES', 50 * 1024 * 1024),
+        'allowed_extensions' => ['zip', 'xml', 'xbrl', 'ixbrl', 'html', 'htm', 'xlsx', 'xls', 'pdf'],
+        'allowed_content_types' => [
+            'application/zip', 'application/octet-stream', 'application/xml', 'text/xml',
+            'text/html', 'application/xhtml+xml', 'application/pdf',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+        ],
+    ],
 ];

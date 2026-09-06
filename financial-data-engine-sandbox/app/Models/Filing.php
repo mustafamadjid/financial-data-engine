@@ -78,6 +78,11 @@ class Filing extends Model
         return $this->hasMany(DebtRecord::class, 'filing_id', 'filing_id');
     }
 
+    public function artifacts(): HasMany
+    {
+        return $this->hasMany(FilingArtifact::class, 'filing_id', 'filing_id');
+    }
+
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class, 'filing_id', 'filing_id');

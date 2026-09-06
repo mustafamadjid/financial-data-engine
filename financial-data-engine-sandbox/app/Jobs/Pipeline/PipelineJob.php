@@ -14,5 +14,4 @@ abstract class PipelineJob implements ShouldQueue
 
     public function __construct(public string $filingId) {}
 
-    public function handle(): void {}
 }
