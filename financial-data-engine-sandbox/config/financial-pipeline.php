@@ -3,6 +3,14 @@
 return [
     'contract_version' => env('FINANCIAL_PIPELINE_CONTRACT_VERSION', '1.0.0'),
 
+    'discovery' => [
+        'disk' => env('FINANCIAL_PIPELINE_DISCOVERY_DISK', env('FINANCIAL_PIPELINE_STORAGE_DISK', 'local')),
+        'fixture_path' => env('FINANCIAL_PIPELINE_DISCOVERY_FIXTURE_PATH', 'financial-pipeline/discovery/candidates.json'),
+        'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_DISCOVERY_ALLOWED_HOSTS', 'example.test'))))),
+        'max_bytes' => (int) env('FINANCIAL_PIPELINE_DISCOVERY_MAX_BYTES', 5 * 1024 * 1024),
+        'max_candidates' => (int) env('FINANCIAL_PIPELINE_DISCOVERY_MAX_CANDIDATES', 1000),
+    ],
+
     /*
      * Keys identify executable operations, not completed/failed processing
      * states. ReprocessStage values address these same operation keys.
