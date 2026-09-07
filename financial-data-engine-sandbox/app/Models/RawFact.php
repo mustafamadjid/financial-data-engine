@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['raw_fact_id', 'filing_id', 'source_concept', 'source_namespace', 'raw_value', 'normalized_numeric_value', 'context_ref', 'unit_ref', 'decimals', 'precision', 'is_nil', 'fact_status'])]
+#[Fillable(['raw_fact_id', 'filing_id', 'source_concept', 'source_namespace', 'raw_value', 'normalized_numeric_value', 'context_ref', 'unit_ref', 'decimals', 'precision', 'is_nil', 'fact_status', 'parser_version', 'parser_config_version'])]
 class RawFact extends Model
 {
     protected $primaryKey = 'raw_fact_id';
@@ -20,6 +20,8 @@ class RawFact extends Model
         return [
             'normalized_numeric_value' => 'decimal:18',
             'is_nil' => 'boolean',
+            'parser_version' => 'string',
+            'parser_config_version' => 'string',
         ];
     }
 

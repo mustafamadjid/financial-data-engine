@@ -71,6 +71,9 @@ it('allows deployment overrides and casts numeric job options', function () {
         expect($config['parser'])->toBe([
             'command' => ['C:/Python Sandbox/python.exe', '-m', 'hissa_xbrl_worker'],
             'working_directory' => 'C:/Parser Sandbox',
+            'version' => '1.0.0',
+            'config_version' => '1.0.0',
+            'process_timeout' => 900,
         ]);
         expect($config['contract_version'])->toBe('2.0.0');
         expect($config['storage'])->toBe([

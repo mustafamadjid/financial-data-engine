@@ -64,6 +64,9 @@ return [
     'parser' => [
         'command' => [env('FINANCIAL_PIPELINE_PARSER_EXECUTABLE', 'python'), '-m', 'hissa_xbrl_worker'],
         'working_directory' => env('FINANCIAL_PIPELINE_PARSER_PATH', base_path('../python/xbrl-worker')),
+        'version' => env('FINANCIAL_PIPELINE_PARSER_VERSION', '1.0.0'),
+        'config_version' => env('FINANCIAL_PIPELINE_PARSER_CONFIG_VERSION', '1.0.0'),
+        'process_timeout' => (int) env('FINANCIAL_PIPELINE_PARSER_PROCESS_TIMEOUT', 900),
     ],
 
     /* Paths are relative to the selected Laravel storage disk. */

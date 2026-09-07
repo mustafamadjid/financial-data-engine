@@ -105,6 +105,28 @@ final class FilingArtifactStorage
         return $artifact !== null && $this->disk()->exists($artifact->storage_path) ? $artifact : null;
     }
 
+    public function validArtifactForFiling(Filing $filing): ?FilingArtifact
+    {
+        $artifact = FilingArtifact::query()
+            ->where('filing_id', $filing->filing_id)
+            ->where('storage_path', $filing->storage_path)
+            ->where('source_hash', $filing->source_hash)
+            ->first();
+
+        if ($artifact === null || ! $this->disk()->exists($artifact->storage_path)) {
+            return null;
+        }
+
+        return hash('sha256', $this->disk()->get($artifact->storage_path)) === $artifact->source_hash
+            ? $artifact
+            : null;
+    }
+
+    public function absolutePath(FilingArtifact $artifact): string
+    {
+        return $this->disk()->path($this->safePath($artifact->storage_path));
+    }
+
     private function stablePath(Filing $filing, string $sourceHash, string $filename): string
     {
         $periodEnd = $filing->period_end instanceof \DateTimeInterface

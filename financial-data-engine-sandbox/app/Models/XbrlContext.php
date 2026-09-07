@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['context_id', 'filing_id', 'source_context_id', 'entity_identifier', 'scope', 'period_type', 'instant_date', 'start_date', 'end_date', 'context_status'])]
+#[Fillable(['context_id', 'filing_id', 'source_context_id', 'entity_identifier', 'scope', 'period_type', 'instant_date', 'start_date', 'end_date', 'context_status', 'parser_version', 'parser_config_version'])]
 class XbrlContext extends Model
 {
     protected $primaryKey = 'context_id';
@@ -22,6 +22,8 @@ class XbrlContext extends Model
             'instant_date' => 'date',
             'start_date' => 'date',
             'end_date' => 'date',
+            'parser_version' => 'string',
+            'parser_config_version' => 'string',
         ];
     }
 

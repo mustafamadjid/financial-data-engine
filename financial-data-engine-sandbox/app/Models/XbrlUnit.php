@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['unit_id', 'filing_id', 'source_unit_id', 'unit_type', 'measure', 'currency'])]
+#[Fillable(['unit_id', 'filing_id', 'source_unit_id', 'unit_type', 'measure', 'currency', 'parser_version', 'parser_config_version'])]
 class XbrlUnit extends Model
 {
     protected $primaryKey = 'unit_id';
@@ -15,6 +15,14 @@ class XbrlUnit extends Model
     public $incrementing = false;
 
     protected $keyType = 'string';
+
+    protected function casts(): array
+    {
+        return [
+            'parser_version' => 'string',
+            'parser_config_version' => 'string',
+        ];
+    }
 
     public function filing(): BelongsTo
     {
