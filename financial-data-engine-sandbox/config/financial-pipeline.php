@@ -77,6 +77,16 @@ return [
         'published_path' => env('FINANCIAL_PIPELINE_PUBLISHED_PATH', 'financial-pipeline/published'),
     ],
 
+    'normalization' => [
+        'version' => env('FINANCIAL_PIPELINE_NORMALIZATION_VERSION', '1.0.0'),
+        'mapping_version' => env('FINANCIAL_PIPELINE_MAPPING_VERSION'),
+    ],
+
+    'validation' => [
+        'rule_set_version' => env('FINANCIAL_PIPELINE_VALIDATION_RULE_SET_VERSION'),
+        'rules' => [],
+    ],
+
     'download' => [
         'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_DOWNLOAD_ALLOWED_HOSTS', 'example.test'))))),
         'http_timeout' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_HTTP_TIMEOUT', 30),
