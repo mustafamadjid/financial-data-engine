@@ -88,6 +88,11 @@ class Filing extends Model
         return $this->hasMany(AuditLog::class, 'filing_id', 'filing_id');
     }
 
+    public function publishedSnapshots(): HasMany
+    {
+        return $this->hasMany(PublishedSnapshot::class, 'filing_id', 'filing_id');
+    }
+
     public function pipelineRun(): HasMany
     {
         return $this->hasMany(PipelineRun::class, 'filing_id', 'filing_id');

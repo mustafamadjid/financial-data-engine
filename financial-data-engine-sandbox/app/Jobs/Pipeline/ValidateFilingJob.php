@@ -21,6 +21,8 @@ use App\Models\ValidationResult;
 use App\Models\ValidationRule;
 use App\Services\Pipeline\JobExecutionRecorder;
 use App\Services\Pipeline\MappingVersionResolver;
+use App\Services\Pipeline\PipelineExecutionLogger;
+use App\Services\Pipeline\PipelineFailureHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -56,6 +58,7 @@ final class ValidateFilingJob extends PipelineJob
         FilingQualityAggregator $qualityAggregator,
         MappingVersionResolver $mappingVersionResolver,
         JobExecutionRecorder $executionRecorder,
+        PipelineExecutionLogger $pipelineLogger,
         PipelineOrchestrator $orchestrator,
     ): void {
         $filing = Filing::query()->find($this->filingId);
@@ -135,6 +138,11 @@ final class ValidateFilingJob extends PipelineJob
             correlationId: $pipelineRun->correlation_id,
         );
         $executionRecorder->running($jobRun);
+        $this->logExecutionContext($pipelineLogger, $jobRun, $pipelineRun, PipelineStage::Validating, [
+            'normalized_dataset_version' => $normalizedDatasetVersion,
+            'validation_rule_set_version' => $ruleSetVersion,
+            'normalization_version' => $normalizationVersion,
+        ]);
 
         try {
             $context = new FilingValidationContext(
@@ -183,6 +191,23 @@ final class ValidateFilingJob extends PipelineJob
                 ])->save();
                 $executionRecorder->succeeded($jobRun);
 
+                if ($qualityStatus === QualityStatus::ReviewRequired) {
+                    AuditLog::query()->create([
+                        'actor_id' => 'system',
+                        'action' => 'filing.review_required',
+                        'entity_type' => Filing::class,
+                        'entity_id' => $current->filing_id,
+                        'new_value' => [
+                            'quality_status' => $qualityStatus->value,
+                            'normalized_dataset_version' => $normalizedDatasetVersion,
+                            'validation_rule_set_version' => $ruleSetVersion,
+                        ],
+                        'rationale' => 'Validation identified a condition requiring explicit review before publishing.',
+                        'filing_id' => $current->filing_id,
+                        'correlation_id' => $jobRun->correlation_id,
+                    ]);
+                }
+
                 AuditLog::query()->create([
                     'actor_id' => 'system',
                     'action' => 'filing.validated',
@@ -215,7 +240,7 @@ final class ValidateFilingJob extends PipelineJob
     public function failed(Throwable $exception): void
     {
         try {
-            app(PipelineOrchestrator::class)->markFailed($this->filingId, PipelineStage::Validating, $exception);
+            app(PipelineFailureHandler::class)->handle($this->filingId, PipelineStage::Validating, $exception);
         } catch (Throwable) {
             // Do not mask the queue worker's original validation failure.
         }

@@ -17,6 +17,8 @@ use App\Models\RawFact;
 use App\Services\Pipeline\JobExecutionRecorder;
 use App\Services\Pipeline\MappingVersionResolver;
 use App\Services\Pipeline\NormalizedFilingPersistence;
+use App\Services\Pipeline\PipelineExecutionLogger;
+use App\Services\Pipeline\PipelineFailureHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -52,6 +54,7 @@ final class NormalizeFactsJob extends PipelineJob
         NormalizedFilingPersistence $persistence,
         MappingVersionResolver $mappingVersionResolver,
         JobExecutionRecorder $executionRecorder,
+        PipelineExecutionLogger $pipelineLogger,
         PipelineOrchestrator $orchestrator,
     ): void {
         $filing = Filing::query()->find($this->filingId);
@@ -119,6 +122,11 @@ final class NormalizeFactsJob extends PipelineJob
             correlationId: $pipelineRun->correlation_id,
         );
         $executionRecorder->running($jobRun);
+        $this->logExecutionContext($pipelineLogger, $jobRun, $pipelineRun, PipelineStage::Normalizing, [
+            'raw_extraction_version' => $rawExtractionVersion,
+            'mapping_version' => $mappingVersion,
+            'normalization_version' => $normalizationVersion,
+        ]);
 
         try {
             $records = [];
@@ -172,7 +180,7 @@ final class NormalizeFactsJob extends PipelineJob
     public function failed(Throwable $exception): void
     {
         try {
-            app(PipelineOrchestrator::class)->markFailed($this->filingId, PipelineStage::Normalizing, $exception);
+            app(PipelineFailureHandler::class)->handle($this->filingId, PipelineStage::Normalizing, $exception);
         } catch (Throwable) {
             // Do not mask the queue worker's original normalization failure.
         }

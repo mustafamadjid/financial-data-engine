@@ -17,6 +17,8 @@ use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
 use App\Services\Pipeline\JobExecutionRecorder;
 use App\Services\Pipeline\ParsedFilingPersistence;
+use App\Services\Pipeline\PipelineExecutionLogger;
+use App\Services\Pipeline\PipelineFailureHandler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -58,6 +60,7 @@ final class ParseXbrlJob extends PipelineJob
         FilingArtifactStorage $artifactStorage,
         ParsedFilingPersistence $persistence,
         JobExecutionRecorder $executionRecorder,
+        PipelineExecutionLogger $pipelineLogger,
         PipelineOrchestrator $orchestrator,
     ): void {
         $filing = Filing::query()->find($this->filingId);
@@ -129,6 +132,11 @@ final class ParseXbrlJob extends PipelineJob
             correlationId: $pipelineRun->correlation_id,
         );
         $executionRecorder->running($jobRun);
+        $this->logExecutionContext($pipelineLogger, $jobRun, $pipelineRun, PipelineStage::Parsing, [
+            'parser_version' => $parserVersion,
+            'parser_config_version' => $parserConfigVersion,
+            'contract_version' => (string) config('financial-pipeline.contract_version', '1.0.0'),
+        ]);
         $context = new ParserExecutionContext(
             filingId: $filing->filing_id,
             sourceHash: (string) $filing->source_hash,
@@ -178,7 +186,7 @@ final class ParseXbrlJob extends PipelineJob
     public function failed(Throwable $exception): void
     {
         try {
-            app(PipelineOrchestrator::class)->markFailed($this->filingId, PipelineStage::Parsing, $exception);
+            app(PipelineFailureHandler::class)->handle($this->filingId, PipelineStage::Parsing, $exception);
         } catch (Throwable) {
             // Do not mask the queue worker's original parser failure.
         }

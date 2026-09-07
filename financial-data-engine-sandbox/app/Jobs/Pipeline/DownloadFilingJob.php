@@ -13,6 +13,8 @@ use App\Models\AuditLog;
 use App\Models\Filing;
 use App\Models\PipelineRun;
 use App\Services\Pipeline\JobExecutionRecorder;
+use App\Services\Pipeline\PipelineExecutionLogger;
+use App\Services\Pipeline\PipelineFailureHandler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -46,6 +48,7 @@ final class DownloadFilingJob extends PipelineJob
         FilingArtifactDownloader $downloader,
         FilingArtifactStorage $storage,
         JobExecutionRecorder $executionRecorder,
+        PipelineExecutionLogger $pipelineLogger,
         PipelineOrchestrator $orchestrator,
     ): void {
         $filing = Filing::query()->find($this->filingId);
@@ -107,6 +110,9 @@ final class DownloadFilingJob extends PipelineJob
             correlationId: $pipelineRun->correlation_id,
         );
         $executionRecorder->running($jobRun);
+        $this->logExecutionContext($pipelineLogger, $jobRun, $pipelineRun, PipelineStage::Downloading, [
+            'revision_number' => $filing->revision_number,
+        ]);
 
         try {
             $downloaded = $downloader->download($filing);
@@ -153,7 +159,7 @@ final class DownloadFilingJob extends PipelineJob
     public function failed(Throwable $exception): void
     {
         try {
-            app(PipelineOrchestrator::class)->markFailed($this->filingId, PipelineStage::Downloading, $exception);
+            app(PipelineFailureHandler::class)->handle($this->filingId, PipelineStage::Downloading, $exception);
         } catch (Throwable) {
             // The queue worker already records the original failure; do not mask it.
         }

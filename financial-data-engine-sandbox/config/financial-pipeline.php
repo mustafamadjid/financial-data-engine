@@ -87,6 +87,11 @@ return [
         'rules' => [],
     ],
 
+    'publish' => [
+        'contract' => env('FINANCIAL_PIPELINE_PUBLISH_CONTRACT', 'hissa.financial-data.publish'),
+        'contract_version' => env('FINANCIAL_PIPELINE_PUBLISH_CONTRACT_VERSION', '1.0.0'),
+    ],
+
     'download' => [
         'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_DOWNLOAD_ALLOWED_HOSTS', 'example.test'))))),
         'http_timeout' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_HTTP_TIMEOUT', 30),

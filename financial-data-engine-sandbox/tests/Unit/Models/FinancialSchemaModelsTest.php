@@ -87,10 +87,12 @@ it('maps pipeline runs to its migration schema', function () {
     expect($model->getTable())->toBe('pipeline_runs')
         ->and($model->getKeyName())->toBe('id')
         ->and($model->getFillable())->toBe([
-            'filing_id', 'trigger', 'status', 'correlation_id', 'started_at', 'finished_at',
+            'filing_id', 'trigger', 'started_from_stage', 'status', 'initiated_by', 'reason',
+            'dependency_versions', 'correlation_id', 'started_at', 'finished_at',
         ])
         ->and($model->getCasts())->toMatchArray([
             'filing_id' => 'string',
+            'dependency_versions' => 'array',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
         ]);
