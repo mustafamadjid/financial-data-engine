@@ -73,6 +73,78 @@ return [
             'after_commit' => false,
         ],
 
+        'redis-discovery' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'discovery',
+            'retry_after' => (int) env('REDIS_DISCOVERY_RETRY_AFTER', 180),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-downloads' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'downloads',
+            'retry_after' => (int) env('REDIS_DOWNLOADS_RETRY_AFTER', 360),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-xbrl' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'xbrl',
+            'retry_after' => (int) env('REDIS_XBRL_RETRY_AFTER', 960),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-normalize' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'normalize',
+            'retry_after' => (int) env('REDIS_NORMALIZE_RETRY_AFTER', 360),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-validate' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'validate',
+            'retry_after' => (int) env('REDIS_VALIDATE_RETRY_AFTER', 360),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-analytics' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'analytics',
+            'retry_after' => (int) env('REDIS_ANALYTICS_RETRY_AFTER', 360),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-enrichment' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'enrichment',
+            'retry_after' => (int) env('REDIS_ENRICHMENT_RETRY_AFTER', 240),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
+        'redis-publish' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'publish',
+            'retry_after' => (int) env('REDIS_PUBLISH_RETRY_AFTER', 180),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],

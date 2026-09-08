@@ -3,17 +3,18 @@
 use App\Domain\FinancialData\Pipeline\ReprocessStage;
 use Illuminate\Support\Env;
 
-it('loads a separate queue and retry policy for every executable stage', function (string $stage, string $queue, int $tries, int $timeout, array $backoff) {
+it('loads a separate queue and retry policy for every executable stage', function (string $stage, string $connection, string $queue, int $tries, int $timeout, array $backoff) {
     expect(config("financial-pipeline.stages.$stage"))->toBe([
-        'queue' => $queue, 'tries' => $tries, 'timeout' => $timeout, 'backoff' => $backoff,
+        'connection' => $connection, 'queue' => $queue, 'tries' => $tries,
+        'timeout' => $timeout, 'backoff' => $backoff,
     ]);
 })->with([
-    ['DISCOVER', 'filing-discovery', 3, 120, [30, 120]],
-    ['DOWNLOAD', 'filing-download', 5, 300, [30, 120, 300]],
-    ['PARSE', 'filing-parse', 2, 900, [60]],
-    ['NORMALIZE', 'filing-normalize', 3, 300, [30, 120]],
-    ['VALIDATE', 'filing-validate', 3, 300, [30, 120]],
-    ['PUBLISH', 'filing-publish', 3, 120, [30, 120]],
+    ['DISCOVER', 'redis-discovery', 'discovery', 3, 120, [30, 120]],
+    ['DOWNLOAD', 'redis-downloads', 'downloads', 5, 300, [30, 120, 300]],
+    ['PARSE', 'redis-xbrl', 'xbrl', 2, 900, [60]],
+    ['NORMALIZE', 'redis-normalize', 'normalize', 3, 300, [30, 120]],
+    ['VALIDATE', 'redis-validate', 'validate', 3, 300, [30, 120]],
+    ['PUBLISH', 'redis-publish', 'publish', 3, 120, [30, 120]],
 ]);
 
 it('configures every reprocess operation without treating terminal states as jobs', function () {
