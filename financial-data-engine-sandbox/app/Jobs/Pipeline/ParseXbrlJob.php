@@ -40,7 +40,8 @@ final class ParseXbrlJob extends PipelineJob
         }
 
         parent::__construct($filingId);
-        $this->onQueue((string) config('financial-pipeline.stages.PARSE.queue', 'filing-parse'));
+        $this->onConnection((string) config('financial-pipeline.stages.PARSE.connection', 'redis-xbrl'));
+        $this->onQueue((string) config('financial-pipeline.stages.PARSE.queue', 'xbrl'));
         $this->tries = (int) config('financial-pipeline.stages.PARSE.tries', 2);
         $this->timeout = (int) config('financial-pipeline.stages.PARSE.timeout', 900);
     }

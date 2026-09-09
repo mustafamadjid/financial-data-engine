@@ -8,6 +8,7 @@ use App\Models\Filing;
 use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,6 +47,24 @@ it('is idempotent for the same filing revision and does not dispatch duplicate d
     Queue::assertPushed(DownloadFilingJob::class, 1);
 });
 
+it('records canonical discovery queue context in structured logs', function () {
+    configureDiscoveryFixture([discoveryJobCandidate('FIL-LOG-DISCOVERY', 'ANTM')]);
+    Queue::fake();
+    Log::spy();
+
+    runDiscoveryJob();
+
+    Log::shouldHaveReceived('withContext')
+        ->once()
+        ->withArgs(fn (array $context): bool => $context['filing_id'] === 'FIL-LOG-DISCOVERY'
+            && $context['stage'] === PipelineStage::Discovered->value
+            && $context['job'] === DiscoverFilingsJob::class
+            && $context['connection'] === 'redis-discovery'
+            && $context['queue'] === 'discovery'
+            && $context['attempt'] === 1
+            && isset($context['pipeline_run_id'], $context['correlation_id']));
+});
+
 it('preserves the previous filing when a new revision candidate is discovered', function () {
     configureDiscoveryFixture([
         discoveryJobCandidate('FIL-001', 'ANTM'),
@@ -78,7 +97,8 @@ it('continues processing valid candidates when fixture metadata is invalid', fun
 it('uses discovery queue retry settings and overlap middleware', function () {
     $job = new DiscoverFilingsJob(new DiscoveryCriteria(sourceAdapter: 'configured', discoveryWindow: '2026-Q2', pageSize: 10));
 
-    expect($job->queue)->toBe('filing-discovery')
+    expect($job->connection)->toBe('redis-discovery')
+        ->and($job->queue)->toBe('discovery')
         ->and($job->tries)->toBe(3)
         ->and($job->timeout)->toBe(120)
         ->and($job->backoff())->toBe([30, 120])

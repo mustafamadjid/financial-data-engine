@@ -134,7 +134,8 @@ it('preserves validation history when the rule version changes', function () {
 it('uses the validation queue policy', function () {
     $job = new ValidateFilingJob('FIL-VALIDATE-CONFIG');
 
-    expect($job->queue)->toBe('filing-validate')
+    expect($job->connection)->toBe('redis-validate')
+        ->and($job->queue)->toBe('validate')
         ->and($job->tries)->toBe(3)
         ->and($job->timeout)->toBe(300)
         ->and($job->backoff())->toBe([30, 120])

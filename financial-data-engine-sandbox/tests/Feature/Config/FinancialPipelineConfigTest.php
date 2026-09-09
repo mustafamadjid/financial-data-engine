@@ -28,6 +28,81 @@ it('configures every reprocess operation without treating terminal states as job
     expect(array_unique(array_column($stages, 'queue')))->toHaveCount(6);
 });
 
+it('defines reserved workload profiles without activating them as pipeline stages', function () {
+    $stages = config('financial-pipeline.stages');
+    $reserved = config('financial-pipeline.reserved_workloads');
+
+    expect($reserved)->toHaveKeys(['ANALYTICS', 'ENRICHMENT'])
+        ->and($stages)->not->toHaveKeys(['ANALYTICS', 'ENRICHMENT'])
+        ->and($reserved['ANALYTICS'])->toMatchArray([
+            'connection' => 'redis-analytics', 'queue' => 'analytics', 'tries' => 3,
+            'timeout' => 300, 'backoff' => [30, 120],
+        ])
+        ->and($reserved['ENRICHMENT'])->toMatchArray([
+            'connection' => 'redis-enrichment', 'queue' => 'enrichment', 'tries' => 5,
+            'timeout' => 180, 'backoff' => [30, 120, 300],
+        ]);
+});
+
+it('keeps canonical queue names unique across active and reserved workloads', function () {
+    $profiles = array_merge(
+        config('financial-pipeline.stages'),
+        config('financial-pipeline.reserved_workloads'),
+    );
+
+    expect(array_unique(array_column($profiles, 'queue')))->toHaveCount(count($profiles));
+});
+
+it('keeps every workload reservation window safely above its timeout', function () {
+    $profiles = array_merge(
+        config('financial-pipeline.stages'),
+        config('financial-pipeline.reserved_workloads'),
+    );
+
+    foreach ($profiles as $profile) {
+        $retryAfter = config("queue.connections.{$profile['connection']}.retry_after");
+
+        expect($retryAfter)->toBeInt()->toBeGreaterThanOrEqual($profile['timeout'] + 30);
+    }
+
+    expect(config('financial-pipeline.stages.PARSE.timeout'))->toBe(900)
+        ->and(config('queue.connections.redis-xbrl.retry_after'))->toBeGreaterThanOrEqual(930);
+});
+
+it('provides isolated baseline worker profiles and an explicit combined priority', function () {
+    expect(config('financial-pipeline.worker_profiles'))->toBe([
+        'discovery' => ['processes' => 1],
+        'downloads' => ['processes' => 2],
+        'xbrl' => ['processes' => 1],
+        'normalize' => ['processes' => 2],
+        'validate' => ['processes' => 2],
+        'analytics' => ['processes' => 0],
+        'enrichment' => ['processes' => 0],
+        'publish' => ['processes' => 1],
+    ])->and(config('financial-pipeline.combined_worker_priority'))->toBe([
+        'publish', 'validate', 'normalize', 'xbrl',
+        'downloads', 'discovery', 'analytics', 'enrichment',
+    ]);
+});
+
+it('keeps Horizon out of the queue stack and documents Redis as the sandbox queue backend', function () {
+    $composer = json_decode(file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR);
+
+    expect($composer['require'] ?? [])->not->toHaveKey('laravel/horizon')
+        ->and($composer['require-dev'] ?? [])->not->toHaveKey('laravel/horizon')
+        ->and(config('queue.connections.redis.driver'))->toBe('redis')
+        ->and(file_get_contents(base_path('.env.example')))->toContain('QUEUE_CONNECTION=redis');
+});
+
+it('uses queue work instead of queue listen for the development worker', function () {
+    $composer = json_decode(file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR);
+    $scripts = json_encode($composer['scripts'] ?? [], JSON_THROW_ON_ERROR);
+
+    expect($scripts)->toContain('queue:work')
+        ->not->toContain('queue:listen')
+        ->not->toContain('--tries=1');
+});
+
 it('points at the existing parser module, versioned contracts and private storage', function () {
     $contract = json_decode(file_get_contents(base_path('../contracts/v1/status-enums.json')), true, flags: JSON_THROW_ON_ERROR);
 
@@ -45,6 +120,7 @@ it('points at the existing parser module, versioned contracts and private storag
 it('allows deployment overrides and casts numeric job options', function () {
     $overrides = [
         'FINANCIAL_PIPELINE_PARSE_QUEUE' => 'sandbox-parser',
+        'FINANCIAL_PIPELINE_PARSE_CONNECTION' => 'redis-sandbox',
         'FINANCIAL_PIPELINE_PARSE_TRIES' => '4',
         'FINANCIAL_PIPELINE_PARSE_TIMEOUT' => '1200',
         'FINANCIAL_PIPELINE_PARSER_EXECUTABLE' => 'C:/Python Sandbox/python.exe',
@@ -67,7 +143,8 @@ it('allows deployment overrides and casts numeric job options', function () {
         $config = require config_path('financial-pipeline.php');
 
         expect($config['stages']['PARSE'])->toBe([
-            'queue' => 'sandbox-parser', 'tries' => 4, 'timeout' => 1200, 'backoff' => [60],
+            'connection' => 'redis-sandbox', 'queue' => 'sandbox-parser', 'tries' => 4,
+            'timeout' => 1200, 'backoff' => [60],
         ]);
         expect($config['parser'])->toBe([
             'command' => ['C:/Python Sandbox/python.exe', '-m', 'hissa_xbrl_worker'],

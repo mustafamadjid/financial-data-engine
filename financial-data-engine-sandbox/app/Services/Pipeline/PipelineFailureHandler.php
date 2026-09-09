@@ -35,6 +35,7 @@ final class PipelineFailureHandler
                     'stage' => $stage->value,
                     'pipeline_run_id' => $pipelineRun?->id,
                     'attempt' => $currentJobRun->attempt,
+                    ...$this->queueContext($stage),
                 ]);
             }
 
@@ -55,5 +56,25 @@ final class PipelineFailureHandler
                 'correlation_id' => $currentJobRun?->correlation_id ?? $pipelineRun?->correlation_id,
             ]);
         });
+    }
+
+    /** @return array{queue_connection: string, queue_name: string} */
+    private function queueContext(PipelineStage $stage): array
+    {
+        $stageKey = match ($stage) {
+            PipelineStage::Discovered => 'DISCOVER',
+            PipelineStage::Downloading => 'DOWNLOAD',
+            PipelineStage::Parsing => 'PARSE',
+            PipelineStage::Normalizing => 'NORMALIZE',
+            PipelineStage::Validating => 'VALIDATE',
+            PipelineStage::Publishing => 'PUBLISH',
+            default => throw new \InvalidArgumentException("Unsupported failure stage [{$stage->value}]."),
+        };
+        $policy = (array) config("financial-pipeline.stages.{$stageKey}");
+
+        return [
+            'queue_connection' => (string) ($policy['connection'] ?? ''),
+            'queue_name' => (string) ($policy['queue'] ?? ''),
+        ];
     }
 }

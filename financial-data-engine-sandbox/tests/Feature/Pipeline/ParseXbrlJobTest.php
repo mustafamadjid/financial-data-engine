@@ -125,7 +125,8 @@ it('leaves the stage retryable when parser infrastructure fails', function () {
 it('uses parse queue retry, timeout, backoff, and overlap settings', function () {
     $job = new ParseXbrlJob('FIL-PARSE-CONFIG');
 
-    expect($job->queue)->toBe('filing-parse')
+    expect($job->connection)->toBe('redis-xbrl')
+        ->and($job->queue)->toBe('xbrl')
         ->and($job->tries)->toBe(2)
         ->and($job->timeout)->toBe(900)
         ->and($job->backoff())->toBe([60])

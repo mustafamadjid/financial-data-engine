@@ -31,6 +31,7 @@ abstract class PipelineJob implements ShouldQueue
             pipelineRunId: $pipelineRun->id,
             stage: $stage,
             job: static::class,
+            connection: (string) $this->connection,
             queue: (string) $this->queue,
             attempt: (int) $jobRun->attempt,
             correlationId: $jobRun->correlation_id,

@@ -74,7 +74,8 @@ it('marks an empty successful response failed without dispatching parse', functi
 it('uses download queue retry, timeout, backoff, and overlap settings', function () {
     $job = new DownloadFilingJob('FIL-DOWNLOAD-CONFIG');
 
-    expect($job->queue)->toBe('filing-download')
+    expect($job->connection)->toBe('redis-downloads')
+        ->and($job->queue)->toBe('downloads')
         ->and($job->tries)->toBe(5)
         ->and($job->timeout)->toBe(300)
         ->and($job->backoff())->toBe([30, 120, 300])

@@ -71,7 +71,8 @@ it('adds structured execution context to publish logs', function () {
         ->withArgs(fn (array $context): bool => $context['filing_id'] === $filing->filing_id
             && $context['stage'] === PipelineStage::Publishing->value
             && $context['job'] === PublishFilingJob::class
-            && $context['queue'] === 'filing-publish');
+            && $context['connection'] === 'redis-publish'
+            && $context['queue'] === 'publish');
 });
 
 function makePublishFiling(string $filingId, string $qualityStatus): Filing

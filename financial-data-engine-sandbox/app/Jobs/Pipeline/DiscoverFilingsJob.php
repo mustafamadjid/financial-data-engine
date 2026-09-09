@@ -26,7 +26,8 @@ final class DiscoverFilingsJob implements ShouldQueue
 
     public function __construct(public readonly DiscoveryCriteria $criteria)
     {
-        $this->onQueue((string) config('financial-pipeline.stages.DISCOVER.queue', 'filing-discovery'));
+        $this->onConnection((string) config('financial-pipeline.stages.DISCOVER.connection', 'redis-discovery'));
+        $this->onQueue((string) config('financial-pipeline.stages.DISCOVER.queue', 'discovery'));
         $this->tries = (int) config('financial-pipeline.stages.DISCOVER.tries', 3);
         $this->timeout = (int) config('financial-pipeline.stages.DISCOVER.timeout', 120);
     }
