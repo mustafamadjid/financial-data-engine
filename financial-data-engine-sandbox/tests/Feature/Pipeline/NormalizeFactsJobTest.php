@@ -54,9 +54,11 @@ it('is idempotent for the same mapping version and preserves raw facts', functio
 
     app()->call([new NormalizeFactsJob($filing->filing_id), 'handle']);
     $rawBefore = RawFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
+    $normalizedBefore = NormalizedFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
     app()->call([new NormalizeFactsJob($filing->filing_id), 'handle']);
 
     expect(NormalizedFact::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(NormalizedFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray())->toBe($normalizedBefore)
         ->and(RawFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray())->toBe($rawBefore)
         ->and(Queue::pushed(ValidateFilingJob::class))->toHaveCount(1);
 });

@@ -48,10 +48,24 @@ it('does not duplicate an extraction when parse is rerun with the same versions'
     $parserCalls = bindParseFake(parserData: makeParseData($filing->filing_id, $filing->source_hash));
 
     runParseJob($filing);
+    $contextsBefore = XbrlContext::query()->where('filing_id', $filing->filing_id)->orderBy('context_id')->get()->toArray();
+    $unitsBefore = XbrlUnit::query()->where('filing_id', $filing->filing_id)->orderBy('unit_id')->get()->toArray();
+    $dimensionsBefore = XbrlDimension::query()
+        ->whereHas('context', fn ($query) => $query->where('filing_id', $filing->filing_id))
+        ->orderBy('dimension_id')
+        ->get()
+        ->toArray();
+    $rawFactsBefore = RawFact::query()->where('filing_id', $filing->filing_id)->orderBy('raw_fact_id')->get()->toArray();
     runParseJob($filing->fresh());
 
     expect(XbrlContext::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(XbrlContext::query()->where('filing_id', $filing->filing_id)->orderBy('context_id')->get()->toArray())->toBe($contextsBefore)
+        ->and(XbrlUnit::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(XbrlUnit::query()->where('filing_id', $filing->filing_id)->orderBy('unit_id')->get()->toArray())->toBe($unitsBefore)
+        ->and(XbrlDimension::query()->whereHas('context', fn ($query) => $query->where('filing_id', $filing->filing_id))->count())->toBe(1)
+        ->and(XbrlDimension::query()->whereHas('context', fn ($query) => $query->where('filing_id', $filing->filing_id))->orderBy('dimension_id')->get()->toArray())->toBe($dimensionsBefore)
         ->and(RawFact::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(RawFact::query()->where('filing_id', $filing->filing_id)->orderBy('raw_fact_id')->get()->toArray())->toBe($rawFactsBefore)
         ->and($parserCalls())->toBe(1)
         ->and(Queue::pushed(NormalizeFactsJob::class))->toHaveCount(1);
 });

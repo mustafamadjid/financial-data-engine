@@ -40,9 +40,12 @@ it('is idempotent when the same download job is run again', function () {
     $filing = makeDownloadFiling('FIL-DOWNLOAD-2');
 
     runDownloadJob($filing);
+    $artifactBefore = FilingArtifact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
     runDownloadJob($filing->fresh());
+    $artifactAfter = FilingArtifact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
 
     expect(FilingArtifact::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and($artifactAfter)->toBe($artifactBefore)
         ->and(Queue::pushed(ParseXbrlJob::class))->toHaveCount(1);
 });
 
