@@ -36,7 +36,7 @@ function createOrchestratorFiling(
     ]);
 }
 
-it('dispatches the next job on its configured queue and advances the processing stage', function (PipelineStage $completedStage, string $jobClass, PipelineStage $nextStage, string $queueName) {
+it('dispatches the next job on its configured connection and queue and advances the processing stage', function (PipelineStage $completedStage, string $jobClass, PipelineStage $nextStage, string $connection, string $queueName) {
     Queue::fake();
     $qualityStatus = $completedStage === PipelineStage::Validated
         ? QualityStatus::Verified
@@ -45,21 +45,26 @@ it('dispatches the next job on its configured queue and advances the processing 
 
     app(PipelineOrchestrator::class)->dispatchNext($filing->filing_id, $completedStage);
 
-    Queue::assertPushed($jobClass, function (object $job) use ($filing, $queueName): bool {
-        return $job->filingId === $filing->filing_id && $job->queue === $queueName;
+    Queue::assertPushed($jobClass, function (object $job) use ($filing, $connection, $queueName): bool {
+        return $job->filingId === $filing->filing_id
+            && $job->connection === $connection
+            && $job->queue === $queueName;
     });
     expect($filing->refresh()->processing_stage)->toBe($nextStage->value)
         ->and($filing->quality_status)->toBe($qualityStatus->value);
 })->with([
-    [PipelineStage::Discovered, DownloadFilingJob::class, PipelineStage::Downloading, 'filing-download'],
-    [PipelineStage::Downloaded, ParseXbrlJob::class, PipelineStage::Parsing, 'filing-parse'],
-    [PipelineStage::Parsed, NormalizeFactsJob::class, PipelineStage::Normalizing, 'filing-normalize'],
-    [PipelineStage::Normalized, ValidateFilingJob::class, PipelineStage::Validating, 'filing-validate'],
-    [PipelineStage::Validated, PublishFilingJob::class, PipelineStage::Publishing, 'filing-publish'],
+    [PipelineStage::Discovered, DownloadFilingJob::class, PipelineStage::Downloading, 'redis-downloads', 'downloads'],
+    [PipelineStage::Downloaded, ParseXbrlJob::class, PipelineStage::Parsing, 'redis-xbrl', 'xbrl'],
+    [PipelineStage::Parsed, NormalizeFactsJob::class, PipelineStage::Normalizing, 'redis-normalize', 'normalize'],
+    [PipelineStage::Normalized, ValidateFilingJob::class, PipelineStage::Validating, 'redis-validate', 'validate'],
+    [PipelineStage::Validated, PublishFilingJob::class, PipelineStage::Publishing, 'redis-publish', 'publish'],
 ]);
 
 it('does not dispatch before the persistence transaction commits', function () {
-    config(['queue.default' => 'database']);
+    config([
+        'queue.default' => 'database',
+        'financial-pipeline.stages.DOWNLOAD.connection' => 'database',
+    ]);
     $filing = createOrchestratorFiling();
     DB::table('jobs')->delete();
 
@@ -106,7 +111,7 @@ it('marks the filing, pipeline run, and active job run failed without dispatchin
         'filing_id' => $filing->filing_id,
         'stage' => PipelineStage::Parsing->value,
         'job_class' => ParseXbrlJob::class,
-        'queue_name' => 'filing-parse',
+        'queue_name' => 'xbrl',
         'attempt' => 1,
         'status' => 'RUNNING',
         'idempotency_key' => 'parse-key',

@@ -25,13 +25,19 @@ it('publishes a verified filing once and reuses the same identity on rerun', fun
     $filing = makePublishFiling('FIL-PUBLISH-1', 'VERIFIED');
 
     app()->call([new PublishFilingJob($filing->filing_id), 'handle']);
+    $snapshotBefore = PublishedSnapshot::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
+    $auditBefore = AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.published')->firstOrFail()->toArray();
     app()->call([new PublishFilingJob($filing->filing_id), 'handle']);
 
     expect(PublishedSnapshot::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(PublishedSnapshot::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray())->toBe($snapshotBefore)
         ->and($filing->fresh()->processing_stage)->toBe(PipelineStage::Published->value)
         ->and(PipelineJobRun::query()->where('filing_id', $filing->filing_id)->where('stage', 'PUBLISHING')->count())->toBe(1)
         ->and(AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.published')->count())->toBe(1)
-        ->and((new PublishFilingJob($filing->filing_id))->queue)->toBe('filing-publish');
+        ->and(AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.published')->firstOrFail()->toArray())->toBe($auditBefore)
+        ->and($auditBefore['entity_id'])->toBe($snapshotBefore['snapshot_id'])
+        ->and((new PublishFilingJob($filing->filing_id))->connection)->toBe('redis-publish')
+        ->and((new PublishFilingJob($filing->filing_id))->queue)->toBe('publish');
 });
 
 it('blocks failed and review-required filings from publish', function (string $qualityStatus) {
@@ -65,7 +71,8 @@ it('adds structured execution context to publish logs', function () {
         ->withArgs(fn (array $context): bool => $context['filing_id'] === $filing->filing_id
             && $context['stage'] === PipelineStage::Publishing->value
             && $context['job'] === PublishFilingJob::class
-            && $context['queue'] === 'filing-publish');
+            && $context['connection'] === 'redis-publish'
+            && $context['queue'] === 'publish');
 });
 
 function makePublishFiling(string $filingId, string $qualityStatus): Filing

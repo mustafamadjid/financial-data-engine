@@ -40,9 +40,12 @@ it('is idempotent when the same download job is run again', function () {
     $filing = makeDownloadFiling('FIL-DOWNLOAD-2');
 
     runDownloadJob($filing);
+    $artifactBefore = FilingArtifact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
     runDownloadJob($filing->fresh());
+    $artifactAfter = FilingArtifact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
 
     expect(FilingArtifact::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and($artifactAfter)->toBe($artifactBefore)
         ->and(Queue::pushed(ParseXbrlJob::class))->toHaveCount(1);
 });
 
@@ -71,7 +74,8 @@ it('marks an empty successful response failed without dispatching parse', functi
 it('uses download queue retry, timeout, backoff, and overlap settings', function () {
     $job = new DownloadFilingJob('FIL-DOWNLOAD-CONFIG');
 
-    expect($job->queue)->toBe('filing-download')
+    expect($job->connection)->toBe('redis-downloads')
+        ->and($job->queue)->toBe('downloads')
         ->and($job->tries)->toBe(5)
         ->and($job->timeout)->toBe(300)
         ->and($job->backoff())->toBe([30, 120, 300])

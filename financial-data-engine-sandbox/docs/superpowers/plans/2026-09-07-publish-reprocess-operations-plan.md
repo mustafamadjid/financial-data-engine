@@ -123,7 +123,7 @@ Modify:
 
 **Interfaces:**
 
-- Job constructor remains `__construct(string $filingId)` and uses `filing-publish`.
+- Job constructor remains `__construct(string $filingId)` and uses the canonical `publish` queue.
 - Job `handle` consumes `PublishEligibilityPolicy`, payload builder, validator, snapshot persistence, `JobExecutionRecorder`, and `PipelineOrchestrator` through constructor/handler injection.
 
 - [ ] Write a failing happy-path test with a verified filing and normalized/validated lineage; assert one snapshot, `PUBLISHED`, successful job run, audit action `filing.published`, and no direct external DB call.
@@ -268,4 +268,3 @@ vendor/bin/pint --dirty --format agent
 php artisan test --compact
 git diff --check
 ```
-

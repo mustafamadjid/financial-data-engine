@@ -10,6 +10,7 @@ use App\Models\AuditLog;
 use App\Models\Filing;
 use App\Models\PipelineRun;
 use App\Services\Pipeline\JobExecutionRecorder;
+use App\Services\Pipeline\PipelineExecutionLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -19,6 +20,7 @@ final class FilingDiscoveryService
     public function __construct(
         private readonly JobExecutionRecorder $executionRecorder,
         private readonly PipelineOrchestrator $orchestrator,
+        private readonly PipelineExecutionLogger $pipelineLogger,
     ) {}
 
     public function persist(
@@ -61,7 +63,7 @@ final class FilingDiscoveryService
                 filingId: $filing->filing_id,
                 stage: PipelineStage::Discovered->value,
                 jobClass: DiscoverFilingsJob::class,
-                queueName: (string) config('financial-pipeline.stages.DISCOVER.queue', 'filing-discovery'),
+                queueName: (string) config('financial-pipeline.stages.DISCOVER.queue', 'discovery'),
                 idempotencyKey: PipelineIdempotencyKey::discovery(
                     $sourceAdapter,
                     $discoveryWindow,
@@ -71,6 +73,16 @@ final class FilingDiscoveryService
                 correlationId: $pipelineRun->correlation_id,
             );
             $this->executionRecorder->running($jobRun);
+            $this->pipelineLogger->withContext($this->pipelineLogger->context(
+                filingId: $filing->filing_id,
+                pipelineRunId: $pipelineRun->id,
+                stage: PipelineStage::Discovered,
+                job: DiscoverFilingsJob::class,
+                connection: (string) config('financial-pipeline.stages.DISCOVER.connection', 'redis-discovery'),
+                queue: (string) $jobRun->queue_name,
+                attempt: (int) $jobRun->attempt,
+                correlationId: $jobRun->correlation_id,
+            ));
             $this->executionRecorder->succeeded($jobRun);
 
             AuditLog::query()->create([

@@ -49,7 +49,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "bunx --bun concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"bun run dev\" --names='server,queue,vite'"
+            "bunx --bun concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:work redis-xbrl --queue=publish,validate,normalize,xbrl,downloads,discovery,analytics,enrichment --sleep=1 --max-time=3600\" \"bun run dev\" --names='server,queue,vite'"
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",

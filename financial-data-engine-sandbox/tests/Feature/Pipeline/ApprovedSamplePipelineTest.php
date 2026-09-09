@@ -19,6 +19,7 @@ use App\Models\ConceptMapping;
 use App\Models\Filing;
 use App\Models\FilingArtifact;
 use App\Models\NormalizedFact;
+use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
 use App\Models\PublishedSnapshot;
 use App\Models\RawFact;
@@ -48,8 +49,13 @@ it('runs the approved sample end to end and keeps same-version reruns idempotent
     runApprovedPipeline($filingId);
 
     $counts = approvedPipelineCounts($filingId);
+    $pipelineRun = PipelineRun::query()->where('filing_id', $filingId)->latest('id')->firstOrFail();
+    $jobRuns = PipelineJobRun::query()->where('filing_id', $filingId)->orderBy('id')->get();
     expect(Filing::query()->findOrFail($filingId)->processing_stage)->toBe(PipelineStage::Published->value)
         ->and(Filing::query()->findOrFail($filingId)->quality_status)->toBe('VERIFIED')
+        ->and($jobRuns)->toHaveCount(6)
+        ->and($jobRuns->pluck('queue_name')->all())->toBe(['discovery', 'downloads', 'xbrl', 'normalize', 'validate', 'publish'])
+        ->and($jobRuns->pluck('correlation_id')->unique()->values()->all())->toBe([$pipelineRun->correlation_id])
         ->and(PublishedSnapshot::query()->where('filing_id', $filingId)->count())->toBe(1)
         ->and(AuditLog::query()->where('filing_id', $filingId)->where('action', 'filing.published')->exists())->toBeTrue();
 
@@ -80,6 +86,11 @@ it('blocks review-required and failed validation outcomes from publishing', func
     app()->call([new ValidateFilingJob($filing->filing_id), 'handle']);
     expect($filing->fresh()->quality_status)->toBe($qualityStatus)
         ->and($filing->fresh()->processing_stage)->toBe(PipelineStage::Validated->value);
+    Queue::assertNotPushed(PublishFilingJob::class);
+    $validationRun = PipelineJobRun::query()->where('filing_id', $filing->filing_id)->where('stage', PipelineStage::Validating->value)->latest('id')->firstOrFail();
+    $pipelineRun = PipelineRun::query()->where('filing_id', $filing->filing_id)->latest('id')->firstOrFail();
+    expect($validationRun->queue_name)->toBe('validate')
+        ->and($validationRun->correlation_id)->toBe($pipelineRun->correlation_id);
 
     if ($qualityStatus === 'REVIEW_REQUIRED') {
         expect(AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.review_required')->exists())->toBeTrue();
@@ -249,6 +260,8 @@ function approvedPipelineCounts(string $filingId): array
         'normalized' => NormalizedFact::query()->where('filing_id', $filingId)->count(),
         'validation' => ValidationResult::query()->where('filing_id', $filingId)->count(),
         'snapshots' => PublishedSnapshot::query()->where('filing_id', $filingId)->count(),
+        'pipeline_runs' => PipelineRun::query()->where('filing_id', $filingId)->count(),
+        'job_runs' => PipelineJobRun::query()->where('filing_id', $filingId)->count(),
     ];
 }
 

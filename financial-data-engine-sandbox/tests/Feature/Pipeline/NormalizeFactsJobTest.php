@@ -54,9 +54,11 @@ it('is idempotent for the same mapping version and preserves raw facts', functio
 
     app()->call([new NormalizeFactsJob($filing->filing_id), 'handle']);
     $rawBefore = RawFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
+    $normalizedBefore = NormalizedFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray();
     app()->call([new NormalizeFactsJob($filing->filing_id), 'handle']);
 
     expect(NormalizedFact::query()->where('filing_id', $filing->filing_id)->count())->toBe(1)
+        ->and(NormalizedFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray())->toBe($normalizedBefore)
         ->and(RawFact::query()->where('filing_id', $filing->filing_id)->firstOrFail()->toArray())->toBe($rawBefore)
         ->and(Queue::pushed(ValidateFilingJob::class))->toHaveCount(1);
 });
@@ -104,7 +106,8 @@ it('records unmapped facts explicitly and keeps them out of canonical output', f
 it('uses the normalization queue policy', function () {
     $job = new NormalizeFactsJob('FIL-NORMALIZE-CONFIG');
 
-    expect($job->queue)->toBe('filing-normalize')
+    expect($job->connection)->toBe('redis-normalize')
+        ->and($job->queue)->toBe('normalize')
         ->and($job->tries)->toBe(3)
         ->and($job->timeout)->toBe(300)
         ->and($job->backoff())->toBe([30, 120])

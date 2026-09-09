@@ -29,7 +29,8 @@ final class DownloadFilingJob extends PipelineJob
     public function __construct(string $filingId)
     {
         parent::__construct($filingId);
-        $this->onQueue((string) config('financial-pipeline.stages.DOWNLOAD.queue', 'filing-download'));
+        $this->onConnection((string) config('financial-pipeline.stages.DOWNLOAD.connection', 'redis-downloads'));
+        $this->onQueue((string) config('financial-pipeline.stages.DOWNLOAD.queue', 'downloads'));
         $this->tries = (int) config('financial-pipeline.stages.DOWNLOAD.tries', 5);
         $this->timeout = (int) config('financial-pipeline.stages.DOWNLOAD.timeout', 300);
     }

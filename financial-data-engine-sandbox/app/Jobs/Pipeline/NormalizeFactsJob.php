@@ -34,7 +34,8 @@ final class NormalizeFactsJob extends PipelineJob
     public function __construct(string $filingId)
     {
         parent::__construct($filingId);
-        $this->onQueue((string) config('financial-pipeline.stages.NORMALIZE.queue', 'filing-normalize'));
+        $this->onConnection((string) config('financial-pipeline.stages.NORMALIZE.connection', 'redis-normalize'));
+        $this->onQueue((string) config('financial-pipeline.stages.NORMALIZE.queue', 'normalize'));
         $this->tries = (int) config('financial-pipeline.stages.NORMALIZE.tries', 3);
         $this->timeout = (int) config('financial-pipeline.stages.NORMALIZE.timeout', 300);
     }

@@ -29,7 +29,7 @@ it('records lifecycle states with attempt and correlation data', function () {
         filingId: 'FIL-001',
         stage: 'PARSE',
         jobClass: 'App\\Jobs\\ParseXbrlJob',
-        queueName: 'filing-parse',
+        queueName: 'xbrl',
         idempotencyKey: 'parse:key',
         attempt: 2,
         pipelineRunId: $pipelineRun->id,
@@ -64,7 +64,7 @@ it('redacts secrets from failure context', function () {
         'status' => 'RUNNING',
         'correlation_id' => '33333333-3333-3333-3333-333333333333',
     ]);
-    $run = $recorder->queued('FIL-002', 'PARSE', 'App\\Jobs\\ParseXbrlJob', 'filing-parse', 'parse:key', pipelineRunId: $pipelineRun->id);
+    $run = $recorder->queued('FIL-002', 'PARSE', 'App\\Jobs\\ParseXbrlJob', 'xbrl', 'parse:key', pipelineRunId: $pipelineRun->id);
 
     $recorder->failed($run, new RuntimeException('Authorization Bearer super-secret-token'), [
         'api_token' => 'super-secret-token',
@@ -82,4 +82,35 @@ it('redacts secrets from failure context', function () {
             'nested' => ['password' => '[REDACTED]'],
             'safe' => 'kept',
         ]);
+});
+
+it('keeps the pipeline run correlation id across retry attempts', function () {
+    $recorder = app(JobExecutionRecorder::class);
+    Filing::create([
+        'filing_id' => 'FIL-003',
+        'issuer_code' => 'TEST',
+        'period_end' => '2026-06-30',
+        'source_url' => 'https://example.test/filing',
+        'source_type' => 'XBRL_INSTANCE',
+        'source_hash' => 'sha256:source',
+        'revision_number' => 1,
+    ]);
+    $pipelineRun = PipelineRun::create([
+        'filing_id' => 'FIL-003',
+        'trigger' => 'PARSE',
+        'status' => 'RUNNING',
+        'correlation_id' => '44444444-4444-4444-4444-444444444444',
+    ]);
+
+    $firstAttempt = $recorder->queued(
+        'FIL-003', 'PARSE', 'App\\Jobs\\Pipeline\\ParseXbrlJob', 'xbrl', 'parse:key',
+        attempt: 1, pipelineRunId: $pipelineRun->id, correlationId: $pipelineRun->correlation_id,
+    );
+    $retryAttempt = $recorder->queued(
+        'FIL-003', 'PARSE', 'App\\Jobs\\Pipeline\\ParseXbrlJob', 'xbrl', 'parse:key',
+        attempt: 2, pipelineRunId: $pipelineRun->id, correlationId: $pipelineRun->correlation_id,
+    );
+
+    expect($firstAttempt->correlation_id)->toBe($pipelineRun->correlation_id)
+        ->and($retryAttempt->correlation_id)->toBe($pipelineRun->correlation_id);
 });

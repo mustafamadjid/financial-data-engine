@@ -38,7 +38,8 @@ final class ValidateFilingJob extends PipelineJob
     public function __construct(string $filingId)
     {
         parent::__construct($filingId);
-        $this->onQueue((string) config('financial-pipeline.stages.VALIDATE.queue', 'filing-validate'));
+        $this->onConnection((string) config('financial-pipeline.stages.VALIDATE.connection', 'redis-validate'));
+        $this->onQueue((string) config('financial-pipeline.stages.VALIDATE.queue', 'validate'));
         $this->tries = (int) config('financial-pipeline.stages.VALIDATE.tries', 3);
         $this->timeout = (int) config('financial-pipeline.stages.VALIDATE.timeout', 300);
     }

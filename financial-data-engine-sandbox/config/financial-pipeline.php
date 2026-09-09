@@ -19,41 +19,82 @@ return [
      */
     'stages' => [
         'DISCOVER' => [
-            'queue' => env('FINANCIAL_PIPELINE_DISCOVER_QUEUE', 'filing-discovery'),
+            'connection' => env('FINANCIAL_PIPELINE_DISCOVER_CONNECTION', 'redis-discovery'),
+            'queue' => env('FINANCIAL_PIPELINE_DISCOVER_QUEUE', 'discovery'),
             'tries' => (int) env('FINANCIAL_PIPELINE_DISCOVER_TRIES', 3),
             'timeout' => (int) env('FINANCIAL_PIPELINE_DISCOVER_TIMEOUT', 120),
             'backoff' => [30, 120],
         ],
         'DOWNLOAD' => [
-            'queue' => env('FINANCIAL_PIPELINE_DOWNLOAD_QUEUE', 'filing-download'),
+            'connection' => env('FINANCIAL_PIPELINE_DOWNLOAD_CONNECTION', 'redis-downloads'),
+            'queue' => env('FINANCIAL_PIPELINE_DOWNLOAD_QUEUE', 'downloads'),
             'tries' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_TRIES', 5),
             'timeout' => (int) env('FINANCIAL_PIPELINE_DOWNLOAD_TIMEOUT', 300),
             'backoff' => [30, 120, 300],
         ],
         'PARSE' => [
-            'queue' => env('FINANCIAL_PIPELINE_PARSE_QUEUE', 'filing-parse'),
+            'connection' => env('FINANCIAL_PIPELINE_PARSE_CONNECTION', 'redis-xbrl'),
+            'queue' => env('FINANCIAL_PIPELINE_PARSE_QUEUE', 'xbrl'),
             'tries' => (int) env('FINANCIAL_PIPELINE_PARSE_TRIES', 2),
             'timeout' => (int) env('FINANCIAL_PIPELINE_PARSE_TIMEOUT', 900),
             'backoff' => [60],
         ],
         'NORMALIZE' => [
-            'queue' => env('FINANCIAL_PIPELINE_NORMALIZE_QUEUE', 'filing-normalize'),
+            'connection' => env('FINANCIAL_PIPELINE_NORMALIZE_CONNECTION', 'redis-normalize'),
+            'queue' => env('FINANCIAL_PIPELINE_NORMALIZE_QUEUE', 'normalize'),
             'tries' => (int) env('FINANCIAL_PIPELINE_NORMALIZE_TRIES', 3),
             'timeout' => (int) env('FINANCIAL_PIPELINE_NORMALIZE_TIMEOUT', 300),
             'backoff' => [30, 120],
         ],
         'VALIDATE' => [
-            'queue' => env('FINANCIAL_PIPELINE_VALIDATE_QUEUE', 'filing-validate'),
+            'connection' => env('FINANCIAL_PIPELINE_VALIDATE_CONNECTION', 'redis-validate'),
+            'queue' => env('FINANCIAL_PIPELINE_VALIDATE_QUEUE', 'validate'),
             'tries' => (int) env('FINANCIAL_PIPELINE_VALIDATE_TRIES', 3),
             'timeout' => (int) env('FINANCIAL_PIPELINE_VALIDATE_TIMEOUT', 300),
             'backoff' => [30, 120],
         ],
         'PUBLISH' => [
-            'queue' => env('FINANCIAL_PIPELINE_PUBLISH_QUEUE', 'filing-publish'),
+            'connection' => env('FINANCIAL_PIPELINE_PUBLISH_CONNECTION', 'redis-publish'),
+            'queue' => env('FINANCIAL_PIPELINE_PUBLISH_QUEUE', 'publish'),
             'tries' => (int) env('FINANCIAL_PIPELINE_PUBLISH_TRIES', 3),
             'timeout' => (int) env('FINANCIAL_PIPELINE_PUBLISH_TIMEOUT', 120),
             'backoff' => [30, 120],
         ],
+    ],
+
+    'reserved_workloads' => [
+        'ANALYTICS' => [
+            'connection' => 'redis-analytics',
+            'queue' => 'analytics',
+            'tries' => 3,
+            'timeout' => 300,
+            'backoff' => [30, 120],
+            'processes' => 0,
+        ],
+        'ENRICHMENT' => [
+            'connection' => 'redis-enrichment',
+            'queue' => 'enrichment',
+            'tries' => 5,
+            'timeout' => 180,
+            'backoff' => [30, 120, 300],
+            'processes' => 0,
+        ],
+    ],
+
+    'worker_profiles' => [
+        'discovery' => ['processes' => 1],
+        'downloads' => ['processes' => 2],
+        'xbrl' => ['processes' => 1],
+        'normalize' => ['processes' => 2],
+        'validate' => ['processes' => 2],
+        'analytics' => ['processes' => 0],
+        'enrichment' => ['processes' => 0],
+        'publish' => ['processes' => 1],
+    ],
+
+    'combined_worker_priority' => [
+        'publish', 'validate', 'normalize', 'xbrl',
+        'downloads', 'discovery', 'analytics', 'enrichment',
     ],
 
     /*
