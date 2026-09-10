@@ -51,6 +51,12 @@ function publishContractPayload(): array
         'quality' => [
             'status' => 'VERIFIED',
             'validation_rule_set_version' => 'rules-1',
+            'normalized_dataset_version' => 'dataset-1',
+        ],
+        'source' => [
+            'source_url' => 'https://example.test/filing',
+            'source_hash' => 'sha256:test',
+            'storage_reference' => null,
         ],
         'normalized_facts' => [[
             'normalized_fact_id' => 'NF-PUBLISH-UNIT',
@@ -60,6 +66,12 @@ function publishContractPayload(): array
             'currency' => 'IDR',
             'scope' => 'CONSOLIDATED',
             'period_end' => '2025-12-31',
+            'period_start' => null,
+            'data_type' => 'REPORTED',
+            'mapping_rule_id' => 'MAP-PUBLISH-UNIT',
+            'mapping_rule_version' => 1,
+            'normalization_version' => '1.0.0@mapping-1',
+            'validation_status' => 'VERIFIED',
         ]],
         'lineage' => [
             'raw_fact_ids' => ['RF-PUBLISH-UNIT'],
@@ -69,5 +81,6 @@ function publishContractPayload(): array
             'normalization_version' => '1.0.0@mapping-1',
             'normalized_dataset_version' => 'dataset-1',
         ],
+        'limitations' => ['items' => [], 'unmapped_concepts' => []],
     ];
 }

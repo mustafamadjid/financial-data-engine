@@ -1,0 +1,3 @@
+{
+  "api_version": "v1", "contract": "hissa.financial-data.integration", "contract_version": "0.1.0", "snapshot": {"snapshot_id": "PUB-BAD-1", "published_at": "2026-09-09T10:30:00+07:00"}, "filing": {"filing_id": "filing_bad", "issuer_code": "ANTM", "report_type": "ANNUAL", "fiscal_year": 2026, "fiscal_period": "FY", "period_start": null, "period_end": "2026-06-30", "revision_number": 1, "supersedes_filing_id": null}, "quality": {"status": "REVIEW_REQUIRED", "validation_rule_set_version": "rules-1", "normalized_dataset_version": "dataset-1", "validation_result_ids": ["VR-1"]}, "facts": [], "provenance": {}, "limitations": {"items": [], "unmapped_concepts": []}
+}

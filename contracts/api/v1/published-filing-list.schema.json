@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hissa.example/contracts/api/v1/published-filing-list.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["api_version", "contract", "contract_version", "data", "pagination"],
+  "properties": {
+    "api_version": {"const": "v1"}, "contract": {"const": "hissa.financial-data.integration-list"}, "contract_version": {"const": "0.1.0"},
+    "data": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["snapshot_id", "filing_id", "issuer_code", "report_type", "fiscal_year", "fiscal_period", "period_end", "revision_number", "quality_status", "published_at", "contract_version", "links"], "properties": {"snapshot_id": {"type": "string"}, "filing_id": {"type": "string"}, "issuer_code": {"type": "string"}, "report_type": {"type": "string"}, "fiscal_year": {"type": "integer"}, "fiscal_period": {"type": "string"}, "period_end": {"type": "string"}, "revision_number": {"type": "integer"}, "quality_status": {"const": "VERIFIED"}, "published_at": {"type": "string"}, "contract_version": {"const": "0.1.0"}, "links": {"type": "object", "required": ["detail", "export"], "properties": {"detail": {"type": "string"}, "export": {"type": "string"}}}}}},
+    "pagination": {"type": "object", "additionalProperties": false, "required": ["limit", "next_cursor", "has_more"], "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 100}, "next_cursor": {"type": ["string", "null"]}, "has_more": {"type": "boolean"}}}
+  }
+}

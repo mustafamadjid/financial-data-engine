@@ -8,6 +8,7 @@ use App\Domain\FinancialData\Parsing\Contracts\XbrlParser;
 use App\Domain\FinancialData\Pipeline\Contracts\FilingDiscoverySource;
 use App\Domain\FinancialData\Publishing\FilingPublishPayloadBuilder;
 use App\Domain\FinancialData\Publishing\PublishContractValidator;
+use App\Domain\FinancialData\Publishing\PublishLimitationsCollector;
 use App\Domain\FinancialData\Validation\Contracts\ValidationRuleProvider;
 use App\Domain\FinancialData\Validation\DatabaseValidationRuleProvider;
 use App\Domain\FinancialData\Validation\ValidationRuleRegistry;
@@ -15,6 +16,9 @@ use App\Infrastructure\Discovery\ConfiguredFilingDiscoverySource;
 use App\Infrastructure\Download\ConfiguredFilingArtifactDownloader;
 use App\Infrastructure\Parsing\ArelleProcessParser;
 use App\Services\Pipeline\ReprocessService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
             expectedVersion: (string) config('financial-pipeline.publish.contract_version', '1.0.0'),
         ));
         $this->app->bind(FilingPublishPayloadBuilder::class, fn (): FilingPublishPayloadBuilder => new FilingPublishPayloadBuilder(
+            limitationsCollector: $this->app->make(PublishLimitationsCollector::class),
             contract: (string) config('financial-pipeline.publish.contract', 'hissa.financial-data.publish'),
             contractVersion: (string) config('financial-pipeline.publish.contract_version', '1.0.0'),
         ));
@@ -48,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        RateLimiter::for('hissa-integration', function (Request $request): Limit {
+            return Limit::perMinute((int) config('integration-api.rate_limit_per_minute', 60))
+                ->by((string) $request->attributes->get('integration_identity', 'unauthenticated'));
+        });
     }
 }

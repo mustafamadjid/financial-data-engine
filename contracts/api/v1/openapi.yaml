@@ -1,0 +1,67 @@
+openapi: 3.1.0
+info:
+  title: HISSA Financial Data Integration API
+  version: 0.1.0
+  description: Read-only access to immutable VERIFIED published snapshots.
+servers:
+  - url: /
+paths:
+  /api/v1/filings/{filing_id}:
+    get:
+      operationId: getPublishedFiling
+      security: [{bearerAuth: []}]
+      parameters: [{'$ref': '#/components/parameters/FilingId'}]
+      responses: {$ref: '#/components/responses/PublishedDocumentResponses'}
+  /api/v1/snapshots/{snapshot_id}:
+    get:
+      operationId: getPublishedSnapshot
+      security: [{bearerAuth: []}]
+      parameters: [{'$ref': '#/components/parameters/SnapshotId'}]
+      responses: {$ref: '#/components/responses/PublishedDocumentResponses'}
+  /api/v1/issuers/{issuer_code}/filings:
+    get:
+      operationId: listIssuerFilings
+      security: [{bearerAuth: []}]
+      parameters:
+        - {'$ref': '#/components/parameters/IssuerCode'}
+        - {name: report_type, in: query, schema: {type: string, enum: [ANNUAL, QUARTERLY, INTERIM, OTHER]}}
+        - {name: fiscal_year, in: query, schema: {type: integer, minimum: 1900, maximum: 2100}}
+        - {name: fiscal_period, in: query, schema: {type: string, maxLength: 16}}
+        - {name: period_end, in: query, schema: {type: string, format: date}}
+        - {name: published_after, in: query, schema: {type: string, format: date-time}}
+        - {name: limit, in: query, schema: {type: integer, default: 25, minimum: 1, maximum: 100}}
+        - {name: cursor, in: query, schema: {type: string}}
+      responses:
+        '200': {description: Published filing summaries, content: {application/json: {schema: {'$ref': 'published-filing-list.schema.json'}}}}
+        '401': {'$ref': '#/components/responses/Unauthorized'}
+        '422': {'$ref': '#/components/responses/InvalidQuery'}
+        '429': {'$ref': '#/components/responses/RateLimited'}
+        '500': {'$ref': '#/components/responses/InternalError'}
+  /api/v1/filings/{filing_id}/export:
+    get:
+      operationId: exportPublishedFiling
+      security: [{bearerAuth: []}]
+      parameters: [{'$ref': '#/components/parameters/FilingId'}]
+      responses: {$ref: '#/components/responses/PublishedDocumentResponses'}
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer}}
+  parameters:
+    FilingId: {name: filing_id, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$'}}
+    SnapshotId: {name: snapshot_id, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$'}}
+    IssuerCode: {name: issuer_code, in: path, required: true, schema: {type: string, pattern: '^[A-Z0-9.-]{1,32}$'}}
+  headers:
+    ContractVersion: {schema: {type: string, example: 0.1.0}}
+  responses:
+    PublishedDocumentResponses:
+      '200': {description: Published document, headers: {ETag: {schema: {type: string}}, X-Request-ID: {schema: {type: string}}, X-HISSA-Contract-Version: {schema: {type: string}}}, content: {application/json: {schema: {'$ref': 'published-filing.schema.json'}}}}
+      '304': {description: Not modified}
+      '401': {'$ref': '#/components/responses/Unauthorized'}
+      '404': {'$ref': '#/components/responses/NotFound'}
+      '422': {'$ref': '#/components/responses/InvalidQuery'}
+      '429': {'$ref': '#/components/responses/RateLimited'}
+      '500': {'$ref': '#/components/responses/InternalError'}
+    Unauthorized: {description: Unauthenticated, content: {application/json: {schema: {'$ref': 'error.schema.json'}}}}
+    NotFound: {description: Published resource not found, content: {application/json: {schema: {'$ref': 'error.schema.json'}}}}
+    InvalidQuery: {description: Invalid request, content: {application/json: {schema: {'$ref': 'error.schema.json'}}}}
+    RateLimited: {description: Rate limited, headers: {Retry-After: {schema: {type: integer}}}, content: {application/json: {schema: {'$ref': 'error.schema.json'}}}}
+    InternalError: {description: Internal integration failure, content: {application/json: {schema: {'$ref': 'error.schema.json'}}}}

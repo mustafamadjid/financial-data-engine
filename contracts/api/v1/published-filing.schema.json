@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hissa.example/contracts/api/v1/published-filing.schema.json",
+  "title": "HISSA Published Filing",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["api_version", "contract", "contract_version", "snapshot", "filing", "quality", "facts", "provenance", "limitations"],
+  "properties": {
+    "api_version": {"const": "v1"},
+    "contract": {"const": "hissa.financial-data.integration"},
+    "contract_version": {"const": "0.1.0"},
+    "snapshot": {"$ref": "#/$defs/snapshot"},
+    "filing": {"$ref": "#/$defs/filing"},
+    "quality": {"$ref": "#/$defs/quality"},
+    "facts": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "limitations": {"$ref": "#/$defs/limitations"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$"},
+    "date": {"type": ["string", "null"], "format": "date"},
+    "decimal": {"type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"},
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["snapshot_id", "published_at"],
+      "properties": {"snapshot_id": {"$ref": "#/$defs/id"}, "published_at": {"type": "string", "format": "date-time"}}
+    },
+    "filing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["filing_id", "issuer_code", "report_type", "fiscal_year", "fiscal_period", "period_start", "period_end", "revision_number", "supersedes_filing_id"],
+      "properties": {
+        "filing_id": {"$ref": "#/$defs/id"}, "issuer_code": {"type": "string", "pattern": "^[A-Z0-9.-]+$"},
+        "report_type": {"enum": ["ANNUAL", "QUARTERLY", "INTERIM", "OTHER"]}, "fiscal_year": {"type": "integer", "minimum": 1900, "maximum": 2100},
+        "fiscal_period": {"type": "string", "minLength": 1, "maxLength": 16}, "period_start": {"$ref": "#/$defs/date"}, "period_end": {"type": "string", "format": "date"},
+        "revision_number": {"type": "integer", "minimum": 1}, "supersedes_filing_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+      }
+    },
+    "quality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "validation_rule_set_version", "normalized_dataset_version", "validation_result_ids"],
+      "properties": {"status": {"const": "VERIFIED"}, "validation_rule_set_version": {"type": "string", "minLength": 1}, "normalized_dataset_version": {"type": "string", "minLength": 1}, "validation_result_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}}
+    },
+    "fact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["normalized_fact_id", "raw_fact_id", "canonical_concept", "value", "currency", "scope", "period_start", "period_end", "data_type", "mapping_rule_id", "mapping_rule_version", "normalization_version", "validation_status"],
+      "properties": {
+        "normalized_fact_id": {"$ref": "#/$defs/id"}, "raw_fact_id": {"$ref": "#/$defs/id"}, "canonical_concept": {"type": "string", "minLength": 1, "not": {"const": "UNMAPPED"}},
+        "value": {"$ref": "#/$defs/decimal"}, "currency": {"type": ["string", "null"]}, "scope": {"enum": ["CONSOLIDATED", "PARENT", "UNKNOWN", null]},
+        "period_start": {"$ref": "#/$defs/date"}, "period_end": {"$ref": "#/$defs/date"}, "data_type": {"enum": ["REPORTED", "DERIVED"]},
+        "mapping_rule_id": {"$ref": "#/$defs/id"}, "mapping_rule_version": {"type": "integer", "minimum": 1}, "normalization_version": {"type": "string", "minLength": 1},
+        "validation_status": {"const": "VERIFIED"}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_url", "source_hash", "storage_reference", "raw_fact_ids", "normalized_fact_ids", "validation_result_ids", "mapping_versions", "normalization_version", "pipeline_run_id", "published_at"],
+      "properties": {
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://"}, "source_hash": {"type": "string", "pattern": "^sha256:"},
+        "storage_reference": {"type": ["string", "null"], "pattern": "^(?![A-Za-z]:|/|\\\\)"}, "raw_fact_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+        "normalized_fact_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}, "validation_result_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+        "mapping_versions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}, "normalization_version": {"type": "string", "minLength": 1},
+        "pipeline_run_id": {"type": "integer", "minimum": 1}, "published_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "limitations": {
+      "type": "object", "additionalProperties": false, "required": ["items", "unmapped_concepts"],
+      "properties": {
+        "items": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["code", "severity", "message", "references"], "properties": {"code": {"type": "string", "minLength": 1}, "severity": {"enum": ["INFO", "WARN"]}, "message": {"type": "string", "minLength": 1}, "references": {"type": "array", "items": {"type": "string"}}}}},
+        "unmapped_concepts": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["source_concept", "source_reference", "reason"], "properties": {"source_concept": {"type": "string", "minLength": 1}, "source_reference": {"type": ["string", "null"]}, "reason": {"type": "string", "minLength": 1}}}}
+      }
+    }
+  }
+}

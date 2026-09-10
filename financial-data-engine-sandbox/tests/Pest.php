@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+require_once __DIR__.'/Support/Phase11ApiFixture.php';
+require_once __DIR__.'/Support/HissaCoreMockClient.php';
+
 /*
 |--------------------------------------------------------------------------
 | Test Case

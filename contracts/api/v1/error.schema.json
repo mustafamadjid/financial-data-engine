@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hissa.example/contracts/api/v1/error.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["api_version", "error", "meta"],
+  "properties": {
+    "api_version": {"const": "v1"},
+    "error": {"type": "object", "additionalProperties": false, "required": ["code", "message", "details"], "properties": {"code": {"type": "string"}, "message": {"type": "string"}, "details": {"type": "array"}}},
+    "meta": {"type": "object", "additionalProperties": false, "required": ["request_id"], "properties": {"request_id": {"type": "string", "minLength": 1}}}
+  }
+}
