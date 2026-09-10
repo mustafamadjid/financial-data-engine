@@ -1,16 +1,17 @@
 <?php
 
 use App\Domain\FinancialData\Integration\Exceptions\InvalidIntegrationQuery;
-use App\Http\Middleware\AssignIntegrationRequestId;
-use App\Http\Middleware\AuthenticateHissaIntegration;
-use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\AssignApiRequestId;
 use App\Http\Responses\Api\V1\IntegrationErrorResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -22,10 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([__DIR__.'/../app/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [HandleInertiaRequests::class]);
+        $middleware->web(remove: [
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+        ]);
         $middleware->alias([
-            'hissa.integration' => AuthenticateHissaIntegration::class,
-            'assign.integration.request.id' => AssignIntegrationRequestId::class,
+            'assign.api.request.id' => AssignApiRequestId::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

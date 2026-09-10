@@ -1,7 +1,7 @@
 <?php
 
-it('keeps integration api disabled outside explicitly enabled environments', function (): void {
-    expect(config('integration-api'))->toHaveKeys([
-        'enabled', 'contract', 'contract_version', 'token', 'identity_label', 'rate_limit_per_minute',
+it('exposes only public api contract and throttling configuration', function (): void {
+    expect(config('api'))->toHaveKeys([
+        'contract', 'contract_version', 'rate_limit_per_minute',
     ]);
 });

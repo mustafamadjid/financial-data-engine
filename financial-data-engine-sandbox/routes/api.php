@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')
     ->name('api.v1.')
-    ->middleware(['assign.integration.request.id', 'hissa.integration', 'throttle:hissa-integration'])
+    ->middleware(['assign.api.request.id', 'throttle:public-api'])
     ->group(function (): void {
         Route::get('/filings/{filing_id}', [PublishedFilingController::class, 'show'])
             ->where('filing_id', '[^/]{1,128}')
