@@ -3,6 +3,7 @@
 use App\Domain\FinancialData\Integration\Exceptions\InvalidIntegrationQuery;
 use App\Http\Middleware\AssignIntegrationRequestId;
 use App\Http\Middleware\AuthenticateHissaIntegration;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Responses\Api\V1\IntegrationErrorResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([__DIR__.'/../app/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [HandleInertiaRequests::class]);
         $middleware->alias([
             'hissa.integration' => AuthenticateHissaIntegration::class,
             'assign.integration.request.id' => AssignIntegrationRequestId::class,

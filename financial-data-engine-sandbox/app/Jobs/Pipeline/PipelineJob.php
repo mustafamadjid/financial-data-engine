@@ -16,7 +16,7 @@ abstract class PipelineJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public string $filingId) {}
+    public function __construct(public string $filingId, public int $attempt = 1) {}
 
     /** @param array<string, scalar|null> $versions */
     protected function logExecutionContext(

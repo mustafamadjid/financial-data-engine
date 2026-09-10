@@ -24,7 +24,7 @@ it('maps pipeline job runs to its migration schema', function () {
         ->and($model->getFillable())->toBe([
             'pipeline_run_id', 'filing_id', 'stage', 'job_class', 'queue_name', 'attempt',
             'status', 'idempotency_key', 'correlation_id', 'error_type', 'error_code',
-            'error_message', 'error_context', 'started_at', 'finished_at',
+            'error_message', 'error_context', 'failure_classification', 'failed_job_uuid', 'logical_input_hash', 'started_at', 'finished_at',
         ])
         ->and($model->getCasts())->toMatchArray([
             'pipeline_run_id' => 'integer',

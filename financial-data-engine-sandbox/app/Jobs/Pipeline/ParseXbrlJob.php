@@ -31,7 +31,7 @@ final class ParseXbrlJob extends PipelineJob
 
     public int $timeout;
 
-    public function __construct(string $filingId)
+    public function __construct(string $filingId, int $attempt = 1)
     {
         $filingId = trim($filingId);
 
@@ -39,7 +39,7 @@ final class ParseXbrlJob extends PipelineJob
             throw new InvalidArgumentException('A valid filing identifier is required.');
         }
 
-        parent::__construct($filingId);
+        parent::__construct($filingId, $attempt);
         $this->onConnection((string) config('financial-pipeline.stages.PARSE.connection', 'redis-xbrl'));
         $this->onQueue((string) config('financial-pipeline.stages.PARSE.queue', 'xbrl'));
         $this->tries = (int) config('financial-pipeline.stages.PARSE.tries', 2);
@@ -129,6 +129,7 @@ final class ParseXbrlJob extends PipelineJob
             jobClass: self::class,
             queueName: (string) $this->queue,
             idempotencyKey: $idempotencyKey,
+            attempt: $this->attempt,
             pipelineRunId: $pipelineRun->id,
             correlationId: $pipelineRun->correlation_id,
         );
