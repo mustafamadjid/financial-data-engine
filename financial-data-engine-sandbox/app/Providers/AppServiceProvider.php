@@ -15,9 +15,12 @@ use App\Domain\FinancialData\Validation\ValidationRuleRegistry;
 use App\Infrastructure\Discovery\ConfiguredFilingDiscoverySource;
 use App\Infrastructure\Download\ConfiguredFilingArtifactDownloader;
 use App\Infrastructure\Parsing\ArelleProcessParser;
+use App\Models\Filing;
+use App\Policies\PipelineFilingPolicy;
 use App\Services\Pipeline\ReprocessService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -53,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Filing::class, PipelineFilingPolicy::class);
+
         RateLimiter::for('hissa-integration', function (Request $request): Limit {
             return Limit::perMinute((int) config('integration-api.rate_limit_per_minute', 60))
                 ->by((string) $request->attributes->get('integration_identity', 'unauthenticated'));

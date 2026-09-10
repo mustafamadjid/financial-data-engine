@@ -3,6 +3,11 @@
 return [
     'contract_version' => env('FINANCIAL_PIPELINE_CONTRACT_VERSION', '1.0.0'),
 
+    'ops' => [
+        'retry_actor_ids' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_OPS_RETRY_ACTOR_IDS', ''))))),
+        'reprocess_actor_ids' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_OPS_REPROCESS_ACTOR_IDS', ''))))),
+    ],
+
     'discovery' => [
         'disk' => env('FINANCIAL_PIPELINE_DISCOVERY_DISK', env('FINANCIAL_PIPELINE_STORAGE_DISK', 'local')),
         'fixture_path' => env('FINANCIAL_PIPELINE_DISCOVERY_FIXTURE_PATH', 'financial-pipeline/discovery/candidates.json'),

@@ -29,9 +29,9 @@ final class PublishFilingJob extends PipelineJob
 
     public int $timeout;
 
-    public function __construct(string $filingId)
+    public function __construct(string $filingId, int $attempt = 1)
     {
-        parent::__construct($filingId);
+        parent::__construct($filingId, $attempt);
         $this->onConnection((string) config('financial-pipeline.stages.PUBLISH.connection', 'redis-publish'));
         $this->onQueue((string) config('financial-pipeline.stages.PUBLISH.queue', 'publish'));
         $this->tries = (int) config('financial-pipeline.stages.PUBLISH.tries', 3);
@@ -102,6 +102,7 @@ final class PublishFilingJob extends PipelineJob
             jobClass: self::class,
             queueName: (string) $this->queue,
             idempotencyKey: $idempotencyKey,
+            attempt: $this->attempt,
             pipelineRunId: $pipelineRun->id,
             correlationId: $pipelineRun->correlation_id,
         );
