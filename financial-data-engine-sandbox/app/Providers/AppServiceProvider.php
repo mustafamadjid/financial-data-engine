@@ -53,9 +53,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('hissa-integration', function (Request $request): Limit {
-            return Limit::perMinute((int) config('integration-api.rate_limit_per_minute', 60))
-                ->by((string) $request->attributes->get('integration_identity', 'unauthenticated'));
+        RateLimiter::for('public-api', function (Request $request): Limit {
+            return Limit::perMinute((int) config('api.rate_limit_per_minute', 60))
+                ->by((string) ($request->ip() ?? 'unknown'));
         });
     }
 }

@@ -18,11 +18,10 @@ it('accepts valid fixtures and rejects invalid fixtures through one consumer par
 });
 
 it('accepts a live api response with the same consumer boundary', function (): void {
-    config(['integration-api.enabled' => true, 'integration-api.token' => 'api-token']);
     $filing = phase11ApiFiling('FIL-COMPAT-1');
     phase11ApiSnapshot($filing, 'PUB-COMPAT-1', '2026-09-09 10:00:00');
 
-    $response = $this->withToken('api-token')->get('/api/v1/snapshots/PUB-COMPAT-1');
+    $response = $this->get('/api/v1/snapshots/PUB-COMPAT-1');
     $accepted = (new HissaCoreMockClient)->acceptResponse($response->baseResponse);
 
     expect($accepted->snapshotId())->toBe('PUB-COMPAT-1')

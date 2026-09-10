@@ -51,7 +51,7 @@ final class PublishedFilingController extends Controller
 
     private function safeFilename(string $issuer, string $filingId, int $revision, string $snapshotId): string
     {
-        $parts = array_map(fn (string $part): string => preg_replace('/[^A-Za-z0-9._-]+/', '-', $part) ?: 'unknown', [$issuer, $filingId, 'r'.$revision, $snapshotId, 'v'.config('integration-api.contract_version', '0.1.0')]);
+        $parts = array_map(fn (string $part): string => preg_replace('/[^A-Za-z0-9._-]+/', '-', $part) ?: 'unknown', [$issuer, $filingId, 'r'.$revision, $snapshotId, 'v'.config('api.contract_version', '0.1.0')]);
 
         return implode('-', $parts).'.json';
     }

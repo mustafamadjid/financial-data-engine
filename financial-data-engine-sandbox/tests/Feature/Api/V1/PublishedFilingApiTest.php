@@ -7,30 +7,25 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('returns the latest exact filing document and historical snapshot independently', function (): void {
-    config(['integration-api.enabled' => true, 'integration-api.token' => 'api-token']);
     $filing = apiFiling('FIL-API-1');
     apiSnapshot($filing, 'PUB-API-1', '2026-09-09 10:00:00');
     apiSnapshot($filing, 'PUB-API-2', '2026-09-09 11:00:00');
 
-    $latest = $this->withToken('api-token')->getJson('/api/v1/filings/'.$filing->filing_id);
-    $historical = $this->withToken('api-token')->getJson('/api/v1/snapshots/PUB-API-1');
+    $latest = $this->getJson('/api/v1/filings/'.$filing->filing_id);
+    $historical = $this->getJson('/api/v1/snapshots/PUB-API-1');
 
     $latest->assertOk()->assertJsonPath('snapshot.snapshot_id', 'PUB-API-2');
     $historical->assertOk()->assertJsonPath('snapshot.snapshot_id', 'PUB-API-1');
 });
 
 it('returns a safe not found response for an unpublished filing', function (): void {
-    config(['integration-api.enabled' => true, 'integration-api.token' => 'api-token']);
-
-    $this->withToken('api-token')->getJson('/api/v1/filings/UNKNOWN')
+    $this->getJson('/api/v1/filings/UNKNOWN')
         ->assertNotFound()
         ->assertJsonPath('error.code', 'PUBLISHED_FILING_NOT_FOUND');
 });
 
 it('returns an identifier error envelope before querying invalid paths', function (): void {
-    config(['integration-api.enabled' => true, 'integration-api.token' => 'api-token']);
-
-    $this->withToken('api-token')->getJson('/api/v1/filings/INVALID%20ID')
+    $this->getJson('/api/v1/filings/INVALID%20ID')
         ->assertStatus(422)
         ->assertJsonPath('error.code', 'INVALID_IDENTIFIER');
 });

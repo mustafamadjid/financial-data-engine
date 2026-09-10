@@ -24,7 +24,7 @@ final class IntegrationErrorResponse
         array $details = [],
     ): JsonResponse {
         [$resolvedStatus, $resolvedCode, $resolvedMessage] = self::resolve($exception, $status, $code, $message);
-        $requestId = (string) ($request->attributes->get('integration_request_id') ?: $request->header('X-Request-ID') ?: 'unknown');
+        $requestId = (string) ($request->attributes->get('api_request_id') ?: $request->header('X-Request-ID') ?: 'unknown');
         $response = response()->json([
             'api_version' => 'v1',
             'error' => ['code' => $resolvedCode, 'message' => $resolvedMessage, 'details' => $details],

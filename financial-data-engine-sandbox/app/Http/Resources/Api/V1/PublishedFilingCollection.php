@@ -27,7 +27,7 @@ final class PublishedFilingCollection implements Responsable
                 'revision_number' => (int) $snapshot->revision_number,
                 'quality_status' => 'VERIFIED',
                 'published_at' => $publishedAt?->toIso8601String(),
-                'contract_version' => (string) config('integration-api.contract_version', '0.1.0'),
+                'contract_version' => (string) config('api.contract_version', '0.1.0'),
                 'links' => [
                     'detail' => route('api.v1.snapshots.show', ['snapshot_id' => $snapshot->snapshot_id]),
                     'export' => route('api.v1.filings.export', ['filing_id' => $snapshot->filing_id]),
@@ -38,14 +38,14 @@ final class PublishedFilingCollection implements Responsable
         return response()->json([
             'api_version' => 'v1',
             'contract' => 'hissa.financial-data.integration-list',
-            'contract_version' => (string) config('integration-api.contract_version', '0.1.0'),
+            'contract_version' => (string) config('api.contract_version', '0.1.0'),
             'data' => $data,
             'pagination' => [
                 'limit' => $this->page->limit(),
                 'next_cursor' => $this->page->nextCursor(),
                 'has_more' => $this->page->hasMore(),
             ],
-        ])->header('X-Request-ID', (string) $request->attributes->get('integration_request_id', 'unknown'))
-            ->header('X-HISSA-Contract-Version', (string) config('integration-api.contract_version', '0.1.0'));
+        ])->header('X-Request-ID', (string) $request->attributes->get('api_request_id', 'unknown'))
+            ->header('X-HISSA-Contract-Version', (string) config('api.contract_version', '0.1.0'));
     }
 }

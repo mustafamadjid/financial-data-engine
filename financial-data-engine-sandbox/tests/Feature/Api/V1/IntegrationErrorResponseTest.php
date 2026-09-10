@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 it('renders stable safe error envelopes for typed integration failures', function (string $exception, int $status, string $code): void {
     $request = Request::create('/api/v1/test', 'GET');
-    $request->attributes->set('integration_request_id', 'request-error-1');
+    $request->attributes->set('api_request_id', 'request-error-1');
     $response = IntegrationErrorResponse::fromThrowable(new $exception, $request, $status, $code);
     $body = $response->getData(true);
 
