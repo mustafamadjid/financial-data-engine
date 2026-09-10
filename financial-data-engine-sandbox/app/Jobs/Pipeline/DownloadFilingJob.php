@@ -26,9 +26,9 @@ final class DownloadFilingJob extends PipelineJob
 
     public int $timeout;
 
-    public function __construct(string $filingId)
+    public function __construct(string $filingId, int $attempt = 1)
     {
-        parent::__construct($filingId);
+        parent::__construct($filingId, $attempt);
         $this->onConnection((string) config('financial-pipeline.stages.DOWNLOAD.connection', 'redis-downloads'));
         $this->onQueue((string) config('financial-pipeline.stages.DOWNLOAD.queue', 'downloads'));
         $this->tries = (int) config('financial-pipeline.stages.DOWNLOAD.tries', 5);
@@ -107,6 +107,7 @@ final class DownloadFilingJob extends PipelineJob
             jobClass: self::class,
             queueName: (string) $this->queue,
             idempotencyKey: $idempotencyKey,
+            attempt: $this->attempt,
             pipelineRunId: $pipelineRun->id,
             correlationId: $pipelineRun->correlation_id,
         );

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['pipeline_run_id', 'filing_id', 'stage', 'job_class', 'queue_name', 'attempt', 'status', 'idempotency_key', 'correlation_id', 'error_type', 'error_code', 'error_message', 'error_context', 'started_at', 'finished_at'])]
+#[Fillable(['pipeline_run_id', 'filing_id', 'stage', 'job_class', 'queue_name', 'attempt', 'status', 'idempotency_key', 'correlation_id', 'error_type', 'error_code', 'error_message', 'error_context', 'failure_classification', 'failed_job_uuid', 'logical_input_hash', 'started_at', 'finished_at'])]
 class PipelineJobRun extends Model
 {
     protected function casts(): array
@@ -28,6 +28,6 @@ class PipelineJobRun extends Model
 
     public function filing(): BelongsTo
     {
-        return $this->belongsTo(Filing::class);
+        return $this->belongsTo(Filing::class, 'filing_id', 'filing_id');
     }
 }

@@ -4,6 +4,18 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Mona Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-hissa-canvas: #f3f5f4;
+    --color-hissa-surface: #ffffff;
+    --color-hissa-primary: #121714;
+    --color-hissa-secondary: #5f6863;
+    --color-hissa-action: #146238;
+    --color-hissa-secondary-soft: #e8f2ec;
+    --color-hissa-subtle: #f8faf9;
+    --color-hissa-border: #e3e8e5;
+    --color-hissa-warning: #b7791f;
+    --color-hissa-warning-soft: #fff6e5;
+    --color-hissa-danger: #c43d3d;
+    --color-hissa-info: #2563eb;
 }
