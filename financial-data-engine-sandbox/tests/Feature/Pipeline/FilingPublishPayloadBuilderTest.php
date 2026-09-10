@@ -104,12 +104,21 @@ it('builds a deterministic publish payload with complete lineage', function () {
     ]);
 
     $payload = app(FilingPublishPayloadBuilder::class)->build($filing);
+    $filing->update(['source_url' => 'https://example.test/changed']);
+    $normalized->update(['value' => '99.99']);
 
     expect($payload['contract'])->toBe('hissa.financial-data.publish')
         ->and($payload['filing']['filing_id'])->toBe($filing->filing_id)
+        ->and($payload['filing'])->toHaveKeys(['period_start', 'supersedes_filing_id'])
+        ->and($payload)->toHaveKeys(['source', 'limitations'])
+        ->and($payload['source']['source_url'])->toBe('https://example.test/FIL-PAYLOAD-1.xbrl')
+        ->and($payload['source']['source_hash'])->toBe(hash('sha256', 'payload'))
         ->and($payload['normalized_facts'][0]['value'])->toBe('100.000000000000000000')
+        ->and($payload['normalized_facts'][0])->toHaveKeys(['period_start', 'data_type', 'validation_status'])
         ->and($payload['lineage']['raw_fact_ids'])->toBe([$raw->raw_fact_id])
         ->and($payload['lineage']['normalized_fact_ids'])->toBe([$normalized->normalized_fact_id])
         ->and($payload['lineage']['validation_result_ids'])->toBe([$validation->validation_result_id])
-        ->and($payload['quality']['validation_rule_set_version'])->toBe('rules-1');
+        ->and($payload['quality']['validation_rule_set_version'])->toBe('rules-1')
+        ->and($payload['source']['source_url'])->toBe('https://example.test/FIL-PAYLOAD-1.xbrl')
+        ->and($payload['normalized_facts'][0]['value'])->toBe('100.000000000000000000');
 });

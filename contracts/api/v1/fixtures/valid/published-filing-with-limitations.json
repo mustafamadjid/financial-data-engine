@@ -1,0 +1,9 @@
+{
+  "api_version": "v1", "contract": "hissa.financial-data.integration", "contract_version": "0.1.0",
+  "snapshot": {"snapshot_id": "PUB-002", "published_at": "2026-09-09T11:30:00+07:00"},
+  "filing": {"filing_id": "filing_02", "issuer_code": "BBCA", "report_type": "ANNUAL", "fiscal_year": 2025, "fiscal_period": "FY", "period_start": null, "period_end": "2025-12-31", "revision_number": 1, "supersedes_filing_id": null},
+  "quality": {"status": "VERIFIED", "validation_rule_set_version": "rules-2026-09", "normalized_dataset_version": "dataset-2026-09", "validation_result_ids": ["VR-002"]},
+  "facts": [{"normalized_fact_id": "NF-002", "raw_fact_id": "RAW-002", "canonical_concept": "cash", "value": "100.50", "currency": "IDR", "scope": "CONSOLIDATED", "period_start": null, "period_end": "2025-12-31", "data_type": "REPORTED", "mapping_rule_id": "MAP-002", "mapping_rule_version": 1, "normalization_version": "1.0.0@mapping-1", "validation_status": "VERIFIED"}],
+  "provenance": {"source_url": "https://source.example/filing-2", "source_hash": "sha256:def", "storage_reference": null, "raw_fact_ids": ["RAW-002"], "normalized_fact_ids": ["NF-002"], "validation_result_ids": ["VR-002"], "mapping_versions": ["1.0.0@mapping-1"], "normalization_version": "1.0.0@mapping-1", "pipeline_run_id": 43, "published_at": "2026-09-09T11:30:00+07:00"},
+  "limitations": {"items": [{"code": "MISSING_DISCLOSURE", "severity": "WARN", "message": "One optional disclosure was not available.", "references": ["VR-002"]}], "unmapped_concepts": [{"source_concept": "OtherDisclosure", "source_reference": "RAW-003", "reason": "No approved mapping was available at publish time."}]}
+}

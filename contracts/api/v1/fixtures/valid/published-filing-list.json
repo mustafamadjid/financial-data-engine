@@ -1,0 +1,5 @@
+{
+  "api_version": "v1", "contract": "hissa.financial-data.integration-list", "contract_version": "0.1.0",
+  "data": [{"snapshot_id": "PUB-001", "filing_id": "filing_01", "issuer_code": "ANTM", "report_type": "QUARTERLY", "fiscal_year": 2026, "fiscal_period": "Q2", "period_end": "2026-06-30", "revision_number": 2, "quality_status": "VERIFIED", "published_at": "2026-09-09T10:30:00+07:00", "contract_version": "0.1.0", "links": {"detail": "/api/v1/snapshots/PUB-001", "export": "/api/v1/filings/filing_01/export"}}],
+  "pagination": {"limit": 25, "next_cursor": null, "has_more": false}
+}

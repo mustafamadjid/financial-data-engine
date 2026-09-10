@@ -12,6 +12,7 @@ final class FilingPublishPayloadBuilder
     public function __construct(
         private readonly string $contract = 'hissa.financial-data.publish',
         private readonly string $contractVersion = '1.0.0',
+        private readonly ?PublishLimitationsCollector $limitationsCollector = null,
     ) {}
 
     /**
@@ -64,11 +65,21 @@ final class FilingPublishPayloadBuilder
                 'report_type' => (string) $filing->report_type,
                 'fiscal_year' => (int) $filing->fiscal_year,
                 'fiscal_period' => (string) $filing->fiscal_period,
+                'period_start' => $filing->period_start?->format('Y-m-d'),
                 'period_end' => $filing->period_end?->format('Y-m-d'),
+                'supersedes_filing_id' => $filing->supersedes_filing_id,
             ],
             'quality' => [
                 'status' => (string) $filing->quality_status,
                 'validation_rule_set_version' => (string) $latestValidation->validation_rule_set_version,
+                'normalized_dataset_version' => (string) $latestValidation->normalized_dataset_version,
+                'validation_result_ids' => $validationResults->pluck('validation_result_id')->unique()->sort()->values()->all(),
+            ],
+            'source' => [
+                'source_url' => (string) $filing->source_url,
+                'source_type' => (string) $filing->source_type,
+                'source_hash' => (string) $filing->source_hash,
+                'storage_reference' => $filing->storage_path,
             ],
             'normalized_facts' => $normalizedFacts->map(fn (NormalizedFact $fact): array => [
                 'normalized_fact_id' => (string) $fact->normalized_fact_id,
@@ -77,10 +88,13 @@ final class FilingPublishPayloadBuilder
                 'value' => (string) $fact->value,
                 'currency' => $fact->currency,
                 'scope' => $fact->scope,
+                'period_start' => $fact->period_start?->format('Y-m-d'),
                 'period_end' => $fact->period_end?->format('Y-m-d'),
+                'data_type' => (string) $fact->data_type,
                 'mapping_rule_id' => (string) $fact->mapping_rule_id,
                 'mapping_rule_version' => (int) $fact->mapping_rule_version,
                 'normalization_version' => (string) $fact->normalization_version,
+                'validation_status' => (string) $fact->validation_status,
             ])->values()->all(),
             'lineage' => [
                 'raw_fact_ids' => $rawFactIds->all(),
@@ -90,6 +104,11 @@ final class FilingPublishPayloadBuilder
                 'normalization_version' => (string) $mappingVersions->last(),
                 'normalized_dataset_version' => (string) $latestValidation->normalized_dataset_version,
             ],
+            'limitations' => ($this->limitationsCollector ?? new PublishLimitationsCollector)->collect(
+                $filing,
+                (string) $latestValidation->normalized_dataset_version,
+                (string) $latestValidation->validation_rule_set_version,
+            ),
         ];
     }
 }

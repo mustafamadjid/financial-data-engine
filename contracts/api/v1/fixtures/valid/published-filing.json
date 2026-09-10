@@ -1,0 +1,9 @@
+{
+  "api_version": "v1", "contract": "hissa.financial-data.integration", "contract_version": "0.1.0",
+  "snapshot": {"snapshot_id": "PUB-001", "published_at": "2026-09-09T10:30:00+07:00"},
+  "filing": {"filing_id": "filing_01", "issuer_code": "ANTM", "report_type": "QUARTERLY", "fiscal_year": 2026, "fiscal_period": "Q2", "period_start": "2026-01-01", "period_end": "2026-06-30", "revision_number": 2, "supersedes_filing_id": "filing_01_r1"},
+  "quality": {"status": "VERIFIED", "validation_rule_set_version": "rules-2026-09", "normalized_dataset_version": "dataset-2026-09", "validation_result_ids": ["VR-001"]},
+  "facts": [{"normalized_fact_id": "NF-001", "raw_fact_id": "RAW-001", "canonical_concept": "total_assets", "value": "42800000000000", "currency": "IDR", "scope": "CONSOLIDATED", "period_start": null, "period_end": "2026-06-30", "data_type": "REPORTED", "mapping_rule_id": "MAP-001", "mapping_rule_version": 3, "normalization_version": "1.0.0@mapping-3", "validation_status": "VERIFIED"}],
+  "provenance": {"source_url": "https://source.example/filing", "source_hash": "sha256:abc", "storage_reference": "financial-pipeline/artifacts/filing_01.zip", "raw_fact_ids": ["RAW-001"], "normalized_fact_ids": ["NF-001"], "validation_result_ids": ["VR-001"], "mapping_versions": ["1.0.0@mapping-3"], "normalization_version": "1.0.0@mapping-3", "pipeline_run_id": 42, "published_at": "2026-09-09T10:30:00+07:00"},
+  "limitations": {"items": [], "unmapped_concepts": []}
+}
