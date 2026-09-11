@@ -3,30 +3,25 @@
 use App\Models\Filing;
 use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 
 uses(DatabaseMigrations::class);
 
-it('requires authentication for the pipeline data endpoint', function (): void {
+it('allows public access to the pipeline data endpoint', function (): void {
     $response = $this->getJson('/ops/data/pipeline-filings');
 
-    $response->assertUnauthorized();
+    $response->assertOk();
 });
 
 it('returns the frozen Ops error shape for invalid list parameters', function (): void {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->getJson('/ops/data/pipeline-filings?per_page=10')
+    $this->getJson('/ops/data/pipeline-filings?per_page=10')
         ->assertStatus(422)
         ->assertJsonPath('code', 'VALIDATION_ERROR')
         ->assertJsonPath('fieldErrors.per_page.0', 'The selected per page is invalid.');
 });
 
 it('returns a paginated pipeline read model with per-stage statuses and capabilities', function (): void {
-    $user = User::factory()->create();
     $filing = createPipelineReadFiling('FIL-OPS-001', 'BBCA', 'PUBLISHED', 'VERIFIED');
     $run = PipelineRun::query()->create([
         'filing_id' => $filing->filing_id,
@@ -42,7 +37,7 @@ it('returns a paginated pipeline read model with per-stage statuses and capabili
     createPipelineJobRun($run->id, $filing->filing_id, 'VALIDATE', 'SUCCEEDED', 1, '2026-09-08 01:00:50', '2026-09-08 01:01:10');
     createPipelineJobRun($run->id, $filing->filing_id, 'PUBLISH', 'SUCCEEDED', 1, '2026-09-08 01:01:10', '2026-09-08 01:02:00');
 
-    $response = $this->actingAs($user)->getJson('/ops/data/pipeline-filings?per_page=25');
+    $response = $this->getJson('/ops/data/pipeline-filings?per_page=25');
 
     $response->assertOk()
         ->assertJsonPath('data.0.filingId', 'FIL-OPS-001')
@@ -58,12 +53,11 @@ it('returns a paginated pipeline read model with per-stage statuses and capabili
 });
 
 it('filters the pipeline list on the server and returns summary counts independently', function (): void {
-    $user = User::factory()->create();
     createPipelineReadFiling('FIL-OPS-BBCA', 'BBCA', 'FAILED', 'FAILED');
     createPipelineReadFiling('FIL-OPS-TLKM', 'TLKM', 'PUBLISHED', 'VERIFIED');
 
-    $list = $this->actingAs($user)->getJson('/ops/data/pipeline-filings?search=BBCA');
-    $summary = $this->actingAs($user)->getJson('/ops/data/pipeline-summary');
+    $list = $this->getJson('/ops/data/pipeline-filings?search=BBCA');
+    $summary = $this->getJson('/ops/data/pipeline-summary');
 
     $list->assertOk()
         ->assertJsonCount(1, 'data')
@@ -75,7 +69,6 @@ it('filters the pipeline list on the server and returns summary counts independe
 });
 
 it('projects missing stages, keeps revisions separate, and uses bounded deterministic queries', function (): void {
-    $user = User::factory()->create();
     $first = createPipelineReadFiling('FIL-OPS-REV1', 'BBCA', 'PARSED', 'PENDING');
     $second = createPipelineReadFiling('FIL-OPS-REV2', 'BBCA', 'PUBLISHED', 'VERIFIED');
     $second->forceFill(['revision_number' => 2])->save();
@@ -91,7 +84,7 @@ it('projects missing stages, keeps revisions separate, and uses bounded determin
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $response = $this->actingAs($user)->getJson('/ops/data/pipeline-filings?search=BBCA&per_page=25');
+    $response = $this->getJson('/ops/data/pipeline-filings?search=BBCA&per_page=25');
     $queries = DB::getQueryLog();
     DB::disableQueryLog();
 
@@ -105,11 +98,8 @@ it('projects missing stages, keeps revisions separate, and uses bounded determin
     expect(count($queries))->toBeLessThanOrEqual(5);
 });
 
-it('renders the authenticated inertia pipeline shell', function (): void {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->get('/ops/pipeline')
+it('renders the public inertia pipeline shell', function (): void {
+    $this->get('/ops/pipeline')
         ->assertOk()
         ->assertSee('data-page');
 });

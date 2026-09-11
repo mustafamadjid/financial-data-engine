@@ -11,7 +11,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware('auth')->prefix('ops')->name('ops.')->group(function (): void {
+Route::prefix('ops')->name('ops.')->group(function (): void {
     Route::get('/pipeline', PipelinePageController::class)->name('pipeline');
 
     Route::prefix('data')->name('data.')->group(function (): void {

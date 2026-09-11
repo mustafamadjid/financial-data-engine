@@ -57,27 +57,27 @@ describe('fetchPipelineFilings', () => {
 
         expect(fetchMock).toHaveBeenCalledWith(
             '/ops/data/pipeline-filings?search=HSSA&processing_stage=VALIDATING&quality_status=REVIEW_REQUIRED&period=FY+2025&sort=issuer_asc&page=2&per_page=50',
-            expect.objectContaining({ credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+            expect.objectContaining({ credentials: 'omit', headers: { Accept: 'application/json' } }),
         );
         expect(result.data[0]?.filingId).toBe('filing-100');
         expect(result.meta).toEqual({ currentPage: 2, perPage: 50, lastPage: 4, total: 178 });
     });
 
-    it('surfaces the server-safe Ops error instead of an opaque failed response', async () => {
+    it('surfaces a server-safe Ops error instead of an opaque failed response', async () => {
         vi.stubGlobal(
             'fetch',
             vi.fn().mockResolvedValue(
-                new Response(JSON.stringify({ code: 'FORBIDDEN', message: 'You do not have permission to view pipeline filings.' }), {
-                    status: 403,
+                new Response(JSON.stringify({ code: 'UPSTREAM_UNAVAILABLE', message: 'The pipeline service is unavailable.' }), {
+                    status: 503,
                     headers: { 'content-type': 'application/json' },
                 }),
             ),
         );
 
         await expect(fetchPipelineFilings({ page: 1, perPage: 25, sort: 'last_processed_desc' })).rejects.toMatchObject<Partial<OpsHttpError>>({
-            status: 403,
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to view pipeline filings.',
+            status: 503,
+            code: 'UPSTREAM_UNAVAILABLE',
+            message: 'The pipeline service is unavailable.',
         });
     });
 });

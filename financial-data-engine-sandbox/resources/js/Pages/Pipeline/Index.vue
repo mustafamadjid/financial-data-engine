@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, ref } from 'vue';
 
-import { OpsHttpError } from '../../features/pipeline/api/pipelineService';
 import PipelineFilters from '../../features/pipeline/components/PipelineFilters.vue';
 import PipelinePagination from '../../features/pipeline/components/PipelinePagination.vue';
 import PipelineSummary from '../../features/pipeline/components/PipelineSummary.vue';
@@ -27,7 +26,6 @@ const hasActiveFilters = computed(() => {
     return params.search !== undefined || params.processingStage !== undefined || params.qualityStatus !== undefined || params.period !== undefined || params.sort !== 'last_processed_desc' || params.perPage !== 25;
 });
 const listError = computed(() => (list.error.value instanceof Error ? list.error.value : null));
-const permissionDenied = computed(() => listError.value instanceof OpsHttpError && listError.value.status === 403);
 const selectedFilingId = ref<string | null>(null);
 const openHistory = ref(false);
 const returnFocus = ref<HTMLElement | null>(null);
@@ -103,8 +101,8 @@ async function closeFiling(): Promise<void> {
                     <div v-for="placeholder in 5" :key="placeholder" class="h-14 animate-pulse rounded-lg bg-hissa-subtle"></div>
                 </div>
                 <div v-else-if="list.isError.value" class="p-6" role="alert">
-                    <h3 class="font-semibold text-hissa-primary">{{ permissionDenied ? 'You do not have permission to view pipeline filings.' : 'Pipeline data could not be loaded.' }}</h3>
-                    <p class="mt-1 text-sm text-hissa-secondary">{{ permissionDenied ? 'Ask an Ops administrator to grant the required access.' : listError?.message ?? 'Check your connection and try again.' }}</p>
+                    <h3 class="font-semibold text-hissa-primary">Pipeline data could not be loaded.</h3>
+                    <p class="mt-1 text-sm text-hissa-secondary">{{ listError?.message ?? 'Check your connection and try again.' }}</p>
                 </div>
                 <template v-else>
                     <PipelineTable :rows="rows" :has-active-filters="hasActiveFilters" @view-detail="openFiling($event)" @view-history="openFiling($event, true)" @retry="openRetry" />

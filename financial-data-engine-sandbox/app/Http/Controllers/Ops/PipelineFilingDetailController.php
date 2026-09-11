@@ -9,7 +9,6 @@ use App\Http\Requests\Ops\PipelineHistoryRequest;
 use App\Models\Filing;
 use App\Models\FilingArtifact;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,14 +16,11 @@ final class PipelineFilingDetailController extends Controller
 {
     public function show(Filing $filing, PipelineFilingDetailQuery $detailQuery): JsonResponse
     {
-        Gate::authorize('viewDetail', $filing);
-
         return response()->json(['data' => $detailQuery->detail($filing)]);
     }
 
     public function history(Filing $filing, PipelineHistoryRequest $request, PipelineFilingHistoryQuery $historyQuery): JsonResponse
     {
-        Gate::authorize('viewHistory', $filing);
         $pagination = $request->pagination();
         $paginator = $historyQuery->paginate($filing, $pagination['per_page']);
 
@@ -44,8 +40,6 @@ final class PipelineFilingDetailController extends Controller
     public function artifact(Filing $filing, FilingArtifact $artifact): StreamedResponse
     {
         abort_unless($artifact->filing_id === $filing->filing_id, 404);
-        Gate::authorize('viewArtifact', [$filing, $artifact]);
-
         $disk = Storage::disk((string) config('financial-pipeline.storage.disk', 'local'));
         abort_unless($disk->exists($artifact->storage_path), 404);
         abort_unless(hash('sha256', $disk->get($artifact->storage_path)) === $artifact->source_hash, 404);

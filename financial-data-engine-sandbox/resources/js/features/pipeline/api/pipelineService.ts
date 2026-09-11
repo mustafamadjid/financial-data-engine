@@ -48,7 +48,7 @@ export async function fetchPipelineSummary(): Promise<PipelineSummary> {
 export async function retryPipelineStage(jobRunId: number, reason?: string): Promise<AcceptedOperation> {
     const response = await requestOps<unknown>(`/ops/actions/pipeline-job-runs/${jobRunId}/retry`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reason?.trim() ? { reason: reason.trim() } : {}),
     });
     if (!isRecord(response) || !isRecord(response.data) || response.data.operation !== 'retry') {
@@ -59,7 +59,7 @@ export async function retryPipelineStage(jobRunId: number, reason?: string): Pro
 
 export async function reprocessPipelineFiling(filingId: string, stage: string, reason: string): Promise<AcceptedOperation> {
     const response = await requestOps<unknown>(`/ops/actions/pipeline-filings/${encodeURIComponent(filingId)}/reprocess`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stage, reason }),
     });
     if (!isRecord(response) || !isRecord(response.data) || response.data.operation !== 'reprocess') throw new Error('The reprocess response is malformed.');
@@ -83,7 +83,7 @@ export async function fetchPipelineFilingHistory(
 async function requestOps<T>(url: string, init: RequestInit = {}): Promise<T> {
     const response = await fetch(url, {
         ...init,
-        credentials: 'same-origin',
+        credentials: 'omit',
         headers: { Accept: 'application/json', ...(init.headers ?? {}) },
     });
     const body = await parseJson(response);
@@ -93,11 +93,6 @@ async function requestOps<T>(url: string, init: RequestInit = {}): Promise<T> {
     }
 
     return body as T;
-}
-
-function csrfToken(): string {
-    if (typeof document === 'undefined') return '';
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
 
 async function parseJson(response: Response): Promise<unknown> {

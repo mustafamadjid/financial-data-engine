@@ -54,18 +54,18 @@ describe('PipelineIndex', () => {
         queryClient.clear();
     });
 
-    it('keeps the page mounted and explains a permission-denied list response', async () => {
+    it('keeps the page mounted and explains a failed list response', async () => {
         vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(
             url.startsWith('/ops/data/pipeline-summary')
                 ? new Response(JSON.stringify({ data: { total: 0, active: 0, failed: 0, verified: 0, reviewRequired: 0, pending: 0, failedExecutions: 0 } }), { status: 200 })
-                : new Response(JSON.stringify({ code: 'FORBIDDEN', message: 'Insufficient role.' }), { status: 403 }),
+                : new Response(JSON.stringify({ code: 'REQUEST_INVALID', message: 'Pipeline request is invalid.' }), { status: 422 }),
         )));
 
         const { wrapper, queryClient } = mountPage();
         await flushPromises();
 
-        expect(wrapper.text()).toContain('You do not have permission to view pipeline filings.');
-        expect(wrapper.text()).toContain('Ask an Ops administrator to grant the required access.');
+        expect(wrapper.text()).toContain('Pipeline data could not be loaded.');
+        expect(wrapper.text()).toContain('Pipeline request is invalid.');
         queryClient.clear();
     });
 });

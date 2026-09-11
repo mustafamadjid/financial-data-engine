@@ -8,16 +8,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Ops\RetryPipelineRequest;
 use App\Models\PipelineJobRun;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 
 final class PipelineRetryController extends Controller
 {
     public function __invoke(PipelineJobRun $jobRun, RetryPipelineRequest $request, RetryFailedPipelineStage $retry): JsonResponse
     {
-        Gate::authorize('retry', $jobRun->filing);
-
         try {
-            $result = $retry->execute($jobRun, (string) $request->user()->getAuthIdentifier(), $request->validated('reason'));
+            $result = $retry->execute($jobRun, 'system', $request->validated('reason'));
         } catch (RetryPipelineException $exception) {
             return response()->json(['code' => $exception->errorCode, 'message' => $exception->getMessage()], $exception->status);
         }
