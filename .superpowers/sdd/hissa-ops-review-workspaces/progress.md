@@ -28,3 +28,7 @@
 - Task 3: `OpsLayout`, responsive navigation, shared async/table/dialog/status primitives, shared Ops HTTP client, feature DTO/query-key foundations, and Pipeline regression integration added.
 - Task 4: Financial Review list/detail endpoints and Inertia page added with server pagination/filtering, decimal-string DTOs, source/context/unit/mapping/validation lineage, and lazy detail dialog.
 - Task 5 checkpoint evidence: 256 PHP tests / 1,241 assertions, 25 frontend tests, strict TypeScript (`tsc --noEmit`), Pint, production Vite build, route inspection, and `git diff --check` all pass.
+- Task 6: Concept Mapping inventory, mapped/unmapped projection, history, canonical options, impact preview, responsive page, and async panels added; focused read tests pass.
+- Task 7: append-only `CreateMappingVersion`, expected-version concurrency guard, canonical/evidence validation, audit, mutation dialog, and targeted TanStack invalidation added; mutation tests pass without reprocess dispatch.
+- Task 8: `ReprocessAffectedFilings`, fresh impact subset validation, deterministic locks, atomic runs/audits, after-commit normalize dispatch, typed confirmation dialog, and targeted invalidation added; batch safety tests pass.
+- Task 9 checkpoint evidence: 267 PHP tests / 1,328 assertions, 26 frontend tests, strict TypeScript, Pint, production Vite build, public Ops route inspection, and `git diff --check` pass.

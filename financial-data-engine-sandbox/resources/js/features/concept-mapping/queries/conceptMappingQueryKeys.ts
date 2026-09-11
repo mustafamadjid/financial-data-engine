@@ -6,4 +6,5 @@ export const conceptMappingQueryKeys = {
     list: (params: MappingListParams) => ['concept-mapping', 'series', params] as const,
     history: (mappingSeriesKey: string, params: { page: number; perPage: number }) => ['concept-mapping', 'series', mappingSeriesKey, 'history', params] as const,
     impact: (mappingSeriesKey: string, version: number | null) => ['concept-mapping', 'series', mappingSeriesKey, 'impact', version] as const,
+    canonicalOptions: () => ['concept-mapping', 'canonical-options'] as const,
 };

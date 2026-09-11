@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<{
 const navigationItems: readonly NavigationItem[] = [
     { id: 'pipeline', label: 'Filings & Pipeline', shortLabel: 'FP', href: '/ops/pipeline' },
     { id: 'financial-review', label: 'Financial Review', shortLabel: 'FR', href: '/ops/financial-review' },
-    { id: 'concept-mapping', label: 'Concept Mapping', shortLabel: 'CM', href: '/ops/concept-mapping' },
+    { id: 'concept-mapping', label: 'Concept Mapping', shortLabel: 'CM', href: '/ops/concept-mappings' },
     { id: 'data-quality', label: 'Data Quality', shortLabel: 'DQ', href: '/ops/data-quality' },
     { id: 'debt-review', label: 'Debt Review', shortLabel: 'DR', href: '/ops/debt-review', disabled: true },
 ];
