@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTable from '../../../components/ops/DataTable.vue';
 import PipelineStageCell from './PipelineStageCell.vue';
 import { PIPELINE_STAGE_KEYS, type PipelineFilingListItem } from '../types/pipeline';
 
@@ -17,9 +18,8 @@ const stages = PIPELINE_STAGE_KEYS;
 </script>
 
 <template>
-    <div class="overflow-x-auto">
-        <table class="min-w-[1080px] w-full border-separate border-spacing-0 text-left text-sm">
-            <caption class="sr-only">Filing pipeline processing status</caption>
+    <DataTable min-width-class="min-w-[1080px]">
+        <template #caption>Filing pipeline processing status</template>
             <thead class="bg-hissa-subtle text-xs font-semibold uppercase tracking-wide text-hissa-secondary">
                 <tr>
                     <th scope="col" class="w-40 border-b border-hissa-border px-3 py-3">Filing / revision</th>
@@ -33,7 +33,7 @@ const stages = PIPELINE_STAGE_KEYS;
                 <tr v-for="row in rows" :key="row.filingId" :data-filing-id="row.filingId" class="bg-hissa-surface align-top hover:bg-hissa-subtle">
                     <td class="px-3 py-3">
                         <p class="font-semibold text-hissa-primary">{{ row.issuerCode }}</p>
-                        <p class="mt-0.5 text-xs text-hissa-secondary">{{ row.filingId }} · Rev {{ row.revisionNumber }}</p>
+                        <p class="mt-0.5 text-xs text-hissa-secondary">{{ row.filingId }} - Rev {{ row.revisionNumber }}</p>
                     </td>
                     <td class="px-3 py-3 text-hissa-secondary">{{ row.fiscalPeriod }} {{ row.fiscalYear }}</td>
                     <td v-for="stage in stages" :key="stage" class="px-3 py-3">
@@ -86,6 +86,5 @@ const stages = PIPELINE_STAGE_KEYS;
                     </td>
                 </tr>
             </tbody>
-        </table>
-    </div>
+    </DataTable>
 </template>

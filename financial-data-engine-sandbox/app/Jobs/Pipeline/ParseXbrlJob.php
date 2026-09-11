@@ -156,7 +156,10 @@ final class ParseXbrlJob extends PipelineJob
 
             DB::transaction(function () use ($filing, $parsed, $context, $executionRecorder, $jobRun, $orchestrator): void {
                 $current = Filing::query()->lockForUpdate()->findOrFail($filing->filing_id);
-                $current->forceFill(['processing_stage' => PipelineStage::Parsed->value])->save();
+                $current->forceFill([
+                    'processing_stage' => PipelineStage::Parsed->value,
+                    'taxonomy_entry_point' => $parsed->taxonomyEntryPoint,
+                ])->save();
                 $executionRecorder->succeeded($jobRun);
 
                 AuditLog::create([

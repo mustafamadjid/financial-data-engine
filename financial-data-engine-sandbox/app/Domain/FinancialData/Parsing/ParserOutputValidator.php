@@ -47,6 +47,7 @@ final class ParserOutputValidator
         $facts = $this->records($payload, 'facts');
         $warnings = $this->records($payload, 'warnings');
         $errors = $this->records($payload, 'errors');
+        $taxonomyEntryPoint = $this->optionalString($payload, 'taxonomy_entry_point');
 
         foreach ([
             'contexts' => $contexts,
@@ -76,6 +77,7 @@ final class ParserOutputValidator
             facts: $facts,
             warnings: $warnings,
             errors: $errors,
+            taxonomyEntryPoint: $taxonomyEntryPoint,
         );
     }
 
@@ -87,6 +89,20 @@ final class ParserOutputValidator
         }
 
         return $payload[$key];
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function optionalString(array $payload, string $key): ?string
+    {
+        if (! array_key_exists($key, $payload) || $payload[$key] === null) {
+            return null;
+        }
+
+        if (! is_string($payload[$key]) || trim($payload[$key]) === '' || strlen($payload[$key]) > 255) {
+            throw new TerminalParserException("Parser field [{$key}] is invalid.");
+        }
+
+        return trim($payload[$key]);
     }
 
     /** @param array<string, mixed> $payload @return array<string, mixed> */

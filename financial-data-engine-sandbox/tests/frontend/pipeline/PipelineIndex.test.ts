@@ -48,6 +48,7 @@ describe('PipelineIndex', () => {
         expect(wrapper.get('[aria-label="Loading pipeline filings"]').exists()).toBe(true);
         await flushPromises();
 
+        expect(wrapper.get('[data-navigation="desktop"] a[aria-current="page"]').text()).toContain('Filings & Pipeline');
         expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/ops/data/pipeline-summary');
         expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/ops/data/pipeline-filings?sort=last_processed_desc&page=1&per_page=25');
         expect(wrapper.text()).toContain('filing-42');

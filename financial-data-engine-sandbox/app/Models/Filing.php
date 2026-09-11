@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['filing_id', 'issuer_code', 'report_type', 'fiscal_year', 'fiscal_period', 'period_start', 'period_end', 'source_url', 'source_type', 'storage_path', 'source_hash', 'revision_number', 'supersedes_filing_id', 'discovered_at', 'downloaded_at', 'processing_stage', 'quality_status'])]
+#[Fillable(['filing_id', 'issuer_code', 'report_type', 'fiscal_year', 'fiscal_period', 'period_start', 'period_end', 'source_url', 'source_type', 'taxonomy_entry_point', 'storage_path', 'source_hash', 'revision_number', 'supersedes_filing_id', 'discovered_at', 'downloaded_at', 'processing_stage', 'quality_status'])]
 class Filing extends Model
 {
     protected $primaryKey = 'filing_id';

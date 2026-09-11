@@ -7,6 +7,7 @@ const props = withDefaults(defineProps<{ filingId: string; initialHistoryOpen?: 
 const emit = defineEmits<{ close: [] }>();
 
 const closeButton = ref<HTMLButtonElement | null>(null);
+const dialogPanel = ref<HTMLElement | null>(null);
 const isHistoryOpen = ref(props.initialHistoryOpen);
 const detail = usePipelineDetailQuery(toRef(props, 'filingId'));
 const detailError = computed(() => detail.error.value instanceof Error ? detail.error.value : null);
@@ -31,6 +32,18 @@ function onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
         event.preventDefault();
         close();
+        return;
+    }
+    if (event.key !== 'Tab' || dialogPanel.value === null) return;
+    const focusable = Array.from(dialogPanel.value.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
     }
 }
 </script>
@@ -38,6 +51,7 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
     <div class="fixed inset-0 z-40 bg-black/30" aria-hidden="true" @click="close" />
     <aside
+        ref="dialogPanel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="filing-detail-title"
