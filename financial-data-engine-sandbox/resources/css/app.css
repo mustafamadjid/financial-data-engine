@@ -6,16 +6,257 @@
 @theme {
     --font-sans: 'Mona Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
     --color-hissa-canvas: #f3f5f4;
     --color-hissa-surface: #ffffff;
+    --color-hissa-surface-subtle: #f8faf9;
+    --color-hissa-surface-muted: #eef2f0;
     --color-hissa-primary: #121714;
     --color-hissa-secondary: #5f6863;
+    --color-hissa-muted: #647069;
     --color-hissa-action: #146238;
+    --color-hissa-action-hover: #0e4e2b;
     --color-hissa-secondary-soft: #e8f2ec;
     --color-hissa-subtle: #f8faf9;
-    --color-hissa-border: #e3e8e5;
-    --color-hissa-warning: #b7791f;
+    --color-hissa-border: #d9e1dc;
+    --color-hissa-border-strong: #b9c5be;
+    --color-hissa-success: #17643a;
+    --color-hissa-success-soft: #eaf3ec;
+    --color-hissa-warning: #8a5a00;
     --color-hissa-warning-soft: #fff6e5;
-    --color-hissa-danger: #c43d3d;
-    --color-hissa-info: #2563eb;
+    --color-hissa-danger: #a62e2e;
+    --color-hissa-danger-soft: #fff0f0;
+    --color-hissa-info: #1d4ed8;
+    --color-hissa-info-soft: #eff6ff;
+    --color-hissa-muted-state: #626e67;
+    --color-hissa-muted-state-soft: #f3f4f6;
+    --color-hissa-selection: #cce3d2;
+
+    --radius-hissa-sm: 4px;
+    --radius-hissa-md: 6px;
+    --radius-hissa-lg: 8px;
+    --radius-hissa-xl: 10px;
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+    }
+
+    *,
+    ::before,
+    ::after {
+        border-color: var(--color-hissa-border);
+    }
+
+    html {
+        background: var(--color-hissa-canvas);
+    }
+
+    body {
+        min-width: 320px;
+        background: var(--color-hissa-canvas);
+        color: var(--color-hissa-primary);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 20px;
+        font-variant-numeric: proportional-nums;
+        font-feature-settings: "kern" 1, "liga" 1;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-hissa-action);
+        outline-offset: 2px;
+    }
+
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+        cursor: not-allowed;
+    }
+
+    ::selection {
+        background: var(--color-hissa-selection);
+        color: var(--color-hissa-primary);
+    }
+
+    * {
+        scrollbar-color: var(--color-hissa-border-strong) transparent;
+        scrollbar-width: thin;
+    }
+
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border: 3px solid transparent;
+        border-radius: 9999px;
+        background: var(--color-hissa-border-strong);
+        background-clip: content-box;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    .animate-pulse {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+
+    .transition,
+    .transition-colors,
+    .transition-opacity,
+    .duration-150 {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.ops-page-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 28px;
+    text-wrap: balance;
+}
+
+.ops-section-title,
+[data-ops-toolbar] h2 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 22px;
+    text-wrap: balance;
+}
+
+.ops-meta {
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.ops-technical {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+}
+
+.ops-numeric {
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.ops-wrap {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.ops-dialog-panel h2 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 24px;
+    text-wrap: balance;
+}
+
+.ops-dialog-panel label,
+[data-ops-filter-bar] label {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.ops-dialog-panel input,
+.ops-dialog-panel select,
+.ops-dialog-panel textarea,
+[data-ops-filter-bar] input,
+[data-ops-filter-bar] select,
+[data-ops-filter-bar] textarea {
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.ops-table {
+    font-variant-numeric: tabular-nums;
+}
+
+.ops-table .font-mono,
+.ops-technical {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+table.ops-table {
+    font-variant-numeric: tabular-nums;
+}
+
+table.ops-table thead th {
+    border-bottom: 1px solid var(--color-hissa-border-strong);
+    background: var(--color-hissa-surface-subtle);
+    color: var(--color-hissa-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 16px;
+    text-transform: none;
+    vertical-align: middle;
+}
+
+table.ops-table tbody tr {
+    transition: background-color 140ms ease;
+}
+
+table.ops-table tbody tr:hover {
+    background: var(--color-hissa-surface-subtle);
+}
+
+table.ops-table tbody td,
+table.ops-table tbody th {
+    font-size: 13px;
+    line-height: 20px;
+    vertical-align: top;
+}
+
+.ops-touch-target {
+    min-height: 40px;
+    min-width: 40px;
+}
+
+@media (pointer: coarse) {
+    .ops-touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    [data-ops-filter-bar] input,
+    [data-ops-filter-bar] select,
+    [data-ops-filter-bar] button,
+    .ops-dialog-panel input,
+    .ops-dialog-panel select,
+    .ops-dialog-panel button {
+        min-height: 44px;
+    }
 }

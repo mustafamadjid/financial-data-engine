@@ -32,6 +32,7 @@ function mountPage() {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    window.history.replaceState({}, '', '/ops/pipeline');
 });
 
 describe('PipelineIndex', () => {
@@ -67,6 +68,55 @@ describe('PipelineIndex', () => {
 
         expect(wrapper.text()).toContain('Pipeline data could not be loaded.');
         expect(wrapper.text()).toContain('Pipeline request is invalid.');
+        queryClient.clear();
+    });
+
+    it('shows active filter context and clears the filter set in one action', async () => {
+        window.history.replaceState({}, '', '/ops/pipeline?search=HSSA&quality_status=FAILED');
+        vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(
+            url.startsWith('/ops/data/pipeline-summary')
+                ? new Response(JSON.stringify({ data: { total: 1, active: 0, failed: 1, verified: 0, reviewRequired: 0, pending: 0, failedExecutions: 1 } }), { status: 200 })
+                : new Response(JSON.stringify({ data: [filing], meta: { currentPage: 1, perPage: 25, lastPage: 1, total: 1 } }), { status: 200 }),
+        )));
+
+        const { wrapper, queryClient } = mountPage();
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('2 filters active');
+        expect(wrapper.text()).toContain('Showing 1 of 1 filings');
+        await wrapper.get('[aria-label="Clear pipeline filters"]').trigger('click');
+        expect((wrapper.get('#pipeline-search').element as HTMLInputElement).value).toBe('');
+        queryClient.clear();
+    });
+
+    it('confirms when a retry request is accepted', async () => {
+        const retryFiling = {
+            ...filing,
+            retryJobRunId: 7,
+            errorSummary: { code: 'PUBLISH_FAILED', message: 'Publish failed.', stage: 'PUBLISH' },
+            allowedActions: {
+                ...filing.allowedActions,
+                retry: { allowed: true, reasonCode: null, reason: null },
+            },
+        };
+        vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify(
+            url.includes('/retry')
+                ? { data: { operation: 'retry', filingId: 'filing-42', pipelineRunId: 42, correlationId: 'corr-42', stage: 'PUBLISH', attempt: 2, jobRunId: 7 } }
+                : url.startsWith('/ops/data/pipeline-summary')
+                    ? { data: { total: 1, active: 0, failed: 1, verified: 0, reviewRequired: 0, pending: 0, failedExecutions: 1 } }
+                    : { data: [retryFiling], meta: { currentPage: 1, perPage: 25, lastPage: 1, total: 1 } },
+        ), { status: 200 }))));
+
+        const { wrapper, queryClient } = mountPage();
+        await flushPromises();
+        await wrapper.get('button[aria-label="Retry failed stage for HSSA filing-42"]').trigger('click');
+        await flushPromises();
+        await wrapper.get('#retry-reason').setValue('Retry after target recovery');
+        const submit = wrapper.findAll('button').find((button) => button.text().includes('Retry stage'));
+        await submit!.trigger('click');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Retry queued for filing-42 at PUBLISH.');
         queryClient.clear();
     });
 });

@@ -29,6 +29,8 @@ describe('OpsLayout', () => {
         expect(activeLink.attributes('href')).toBe('/ops/pipeline');
         expect(activeLink.text()).toContain('Filings & Pipeline');
         expect(wrapper.get('main').attributes('data-page')).toBe('pipeline');
+        expect(wrapper.get('[data-ops-header]').attributes('aria-label')).toBe('Ops workspace header');
+        expect(wrapper.get('[data-ops-header-utilities]').text()).toContain('Monitoring every minute');
         expect(wrapper.text()).toContain('Search workspace');
         expect(wrapper.text()).toContain('Monitoring every minute');
     });
@@ -39,11 +41,15 @@ describe('OpsLayout', () => {
             props: { currentPath: '/ops/pipeline', pageId: 'pipeline', title: 'Pipeline' },
         });
         const menuButton = wrapper.get<HTMLButtonElement>('[aria-label="Open navigation"]');
+        expect(menuButton.attributes('aria-expanded')).toBe('false');
+        expect(menuButton.attributes('aria-controls')).toBe('ops-navigation-drawer');
         menuButton.element.focus();
         await menuButton.trigger('click');
 
         const overlay = wrapper.get('[data-navigation-overlay]');
         expect(overlay.attributes('role')).toBe('dialog');
+        expect(menuButton.attributes('aria-expanded')).toBe('true');
+        expect(overlay.get('#ops-navigation-drawer').attributes('id')).toBe('ops-navigation-drawer');
         expect(document.activeElement).toBe(overlay.get('[aria-label="Close navigation"]').element);
 
         await overlay.trigger('keydown', { key: 'Tab', shiftKey: true });

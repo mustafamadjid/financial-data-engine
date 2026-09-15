@@ -26,5 +26,7 @@ describe('Ops accessibility primitives', () => {
 
         expect(wrapper.get('caption').text()).toBe('Financial facts');
         expect(wrapper.get('th').attributes('scope')).toBe('col');
+        expect(wrapper.get('[role="region"]').attributes('tabindex')).toBe('0');
+        expect(wrapper.get('[role="region"]').attributes('aria-label')).toBe('Scrollable data table');
     });
 });
