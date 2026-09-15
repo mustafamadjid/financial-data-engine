@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SearchInput from '../../../components/ops/SearchInput.vue';
 import type { PipelinePerPage, PipelineProcessingStage, PipelineSort, QualityStatus } from '../types/pipeline';
 
 defineProps<{
@@ -30,20 +31,18 @@ function optionalValue(event: Event): string | undefined {
 </script>
 
 <template>
-    <section aria-label="Pipeline filters" class="flex flex-wrap items-end gap-3">
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
-            Search
-            <input
-                :value="search"
-                type="search"
-                placeholder="Search ticker or filing…"
-                class="h-10 w-[280px] rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none placeholder:text-hissa-secondary focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20"
-                @input="emit('update:search', inputValue($event))"
-            />
-        </label>
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
+    <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(17rem,1.6fr)_repeat(5,minmax(7rem,1fr))]">
+        <SearchInput
+            id="pipeline-search"
+            label="Search filings"
+            :model-value="search"
+            placeholder="Ticker or filing ID"
+            input-class="w-full"
+            @update:model-value="emit('update:search', $event)"
+        />
+        <label for="pipeline-quality-status" class="grid min-w-0 gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-secondary">
             Quality
-            <select :value="qualityStatus" class="h-10 rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" @change="emit('update:quality-status', optionalValue($event) as QualityStatus | undefined)">
+            <select id="pipeline-quality-status" :value="qualityStatus" class="min-h-10 w-full min-w-0 rounded-md border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" @change="emit('update:quality-status', optionalValue($event) as QualityStatus | undefined)">
                 <option :value="undefined">All quality</option>
                 <option value="PENDING">Pending</option>
                 <option value="VERIFIED">Verified</option>
@@ -51,9 +50,9 @@ function optionalValue(event: Event): string | undefined {
                 <option value="FAILED">Failed</option>
             </select>
         </label>
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
+        <label for="pipeline-processing-stage" class="grid min-w-0 gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-secondary">
             Stage
-            <select :value="processingStage" class="h-10 rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" @change="emit('update:processing-stage', optionalValue($event) as PipelineProcessingStage | undefined)">
+            <select id="pipeline-processing-stage" :value="processingStage" class="min-h-10 w-full min-w-0 rounded-md border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" @change="emit('update:processing-stage', optionalValue($event) as PipelineProcessingStage | undefined)">
                 <option :value="undefined">All stages</option>
                 <option value="DOWNLOADING">Downloading</option>
                 <option value="PARSING">Parsing</option>
@@ -63,25 +62,25 @@ function optionalValue(event: Event): string | undefined {
                 <option value="FAILED">Failed</option>
             </select>
         </label>
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
+        <label for="pipeline-period" class="grid min-w-0 gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-secondary">
             Period
-            <input :value="period" type="text" placeholder="FY 2025" class="h-10 w-28 rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none placeholder:text-hissa-secondary focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" @input="emit('update:period', optionalValue($event))" />
+            <input id="pipeline-period" :value="period" type="text" placeholder="FY 2025" class="min-h-10 w-full min-w-0 rounded-md border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none placeholder:text-hissa-muted transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" @input="emit('update:period', optionalValue($event))" />
         </label>
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
+        <label for="pipeline-sort" class="grid min-w-0 gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-secondary">
             Sort
-            <select :value="sort" class="h-10 rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" @change="emit('update:sort', inputValue($event) as PipelineSort)">
+            <select id="pipeline-sort" :value="sort" class="min-h-10 w-full min-w-0 rounded-md border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" @change="emit('update:sort', inputValue($event) as PipelineSort)">
                 <option value="last_processed_desc">Latest processed</option>
                 <option value="last_processed_asc">Oldest processed</option>
-                <option value="issuer_asc">Issuer A–Z</option>
+                <option value="issuer_asc">Issuer A-Z</option>
             </select>
         </label>
-        <label class="grid gap-1.5 text-[13px] font-semibold text-hissa-secondary">
+        <label for="pipeline-per-page" class="grid min-w-0 gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-secondary">
             Rows
-            <select :value="perPage" class="h-10 rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" @change="emit('update:per-page', Number(inputValue($event)) as PipelinePerPage)">
+            <select id="pipeline-per-page" :value="perPage" class="min-h-10 w-full min-w-0 rounded-md border border-hissa-border bg-hissa-surface px-3 text-sm font-normal text-hissa-primary outline-none transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" @change="emit('update:per-page', Number(inputValue($event)) as PipelinePerPage)">
                 <option :value="25">25</option>
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
         </label>
-    </section>
+    </div>
 </template>

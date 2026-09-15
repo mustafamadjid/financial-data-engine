@@ -43,28 +43,27 @@ async function submit(): Promise<void> {
     <OpsDialog v-if="open" title-id="mark-review-title" description-id="mark-review-description" panel-class="max-w-lg" @close="emit('close')">
         <div class="flex items-start justify-between gap-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-hissa-action">Manual review</p>
-                <h2 id="mark-review-title" class="mt-1 text-xl font-semibold">Mark for review</h2>
+                <h2 id="mark-review-title" class="ops-section-title">Mark for review</h2>
             </div>
-            <button type="button" aria-label="Close mark for review" class="min-h-10 min-w-10 rounded-lg px-2 py-1 text-2xl leading-none text-hissa-secondary hover:bg-hissa-subtle" @click="emit('close')">×</button>
+            <button type="button" aria-label="Close mark for review" class="min-h-10 shrink-0 rounded-md border border-hissa-border px-3 py-2 text-sm font-semibold text-hissa-secondary outline-none transition-colors hover:bg-hissa-surface-subtle focus-visible:ring-2 focus-visible:ring-hissa-action focus-visible:ring-offset-2" @click="emit('close')">Close</button>
         </div>
-        <p id="mark-review-description" class="mt-3 text-sm leading-[21px] text-hissa-secondary">This creates a review item without changing the financial record or reprocessing data.</p>
-        <div v-if="!capability.allowed" class="mt-5 rounded-lg border border-hissa-border bg-hissa-subtle p-4 text-sm" role="status">
-            <p class="font-semibold">Review action unavailable</p>
-            <p class="mt-1 text-hissa-secondary">{{ capability.reason ?? 'This item is not eligible for manual review.' }}</p>
+        <p id="mark-review-description" class="mt-1 text-sm leading-5 text-hissa-secondary">This creates a review item without changing the financial record or reprocessing data.</p>
+        <div v-if="!capability.allowed" class="mt-5 border-l border-hissa-border bg-hissa-surface-subtle px-3 py-2.5 text-sm" role="status">
+            <p class="font-semibold text-hissa-primary">Review action unavailable</p>
+            <p class="ops-wrap mt-1 text-hissa-secondary">{{ capability.reason ?? 'This item is not eligible for manual review.' }}</p>
         </div>
         <form v-else class="mt-5 space-y-4" @submit.prevent="submit">
             <div>
-                <label for="review-rationale" class="text-sm font-semibold">Rationale</label>
-                <textarea id="review-rationale" v-model="rationale" rows="4" class="mt-1 w-full rounded-lg border border-hissa-border bg-hissa-surface p-3 text-sm outline-none focus:border-hissa-action focus:ring-2 focus:ring-hissa-action/20" :aria-invalid="validationMessage !== null ? 'true' : undefined" aria-describedby="review-rationale-help review-rationale-error" />
-                <p id="review-rationale-help" class="mt-1 text-xs text-hissa-secondary">Describe what an analyst should verify.</p>
+                <label for="review-rationale" class="grid gap-1.5 text-[13px] font-semibold leading-[18px] text-hissa-primary">Rationale</label>
+                <textarea id="review-rationale" v-model="rationale" rows="4" class="mt-1.5 min-h-24 w-full resize-y rounded-md border border-hissa-border bg-hissa-surface px-3 py-2 text-sm text-hissa-primary outline-none placeholder:text-hissa-muted transition-colors hover:border-hissa-border-strong focus-visible:border-hissa-action focus-visible:ring-2 focus-visible:ring-hissa-action/20" :aria-invalid="validationMessage !== null ? 'true' : undefined" aria-describedby="review-rationale-help review-rationale-error" />
+                <p id="review-rationale-help" class="mt-1 ops-meta text-hissa-secondary">Describe what an analyst should verify.</p>
                 <p v-if="validationMessage" id="review-rationale-error" class="mt-1 text-sm text-hissa-danger" role="alert">{{ validationMessage }}</p>
             </div>
-            <p v-if="errorMessage" class="text-sm text-hissa-danger" role="alert">{{ errorMessage }}</p>
-            <p aria-live="polite" class="text-sm text-hissa-secondary">{{ mutation.isPending.value ? 'Saving review item…' : mutation.isSuccess.value ? 'Review item accepted.' : '' }}</p>
-            <div class="flex justify-end gap-2">
-                <button type="button" class="min-h-10 rounded-lg border border-hissa-border px-4 py-2 text-sm font-semibold" @click="emit('close')">Cancel</button>
-                <button type="submit" class="min-h-10 rounded-lg bg-hissa-action px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="mutation.isPending.value || validationMessage !== null">{{ mutation.isPending.value ? 'Saving…' : 'Mark for review' }}</button>
+            <p v-if="errorMessage" class="ops-wrap border-l border-hissa-danger bg-hissa-danger-soft px-3 py-2.5 text-sm text-hissa-danger" role="alert">{{ errorMessage }}</p>
+            <p aria-live="polite" class="ops-meta text-hissa-secondary">{{ mutation.isPending.value ? 'Saving review item…' : mutation.isSuccess.value ? 'Review item accepted.' : '' }}</p>
+            <div class="flex flex-wrap justify-end gap-2 border-t border-hissa-border pt-4">
+                <button type="button" class="min-h-10 rounded-md border border-hissa-border px-3 py-2 text-sm font-semibold text-hissa-secondary outline-none transition-colors hover:bg-hissa-surface-subtle focus-visible:ring-2 focus-visible:ring-hissa-action focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" :disabled="mutation.isPending.value" @click="emit('close')">Cancel</button>
+                <button type="submit" class="min-h-10 rounded-md bg-hissa-action px-3 py-2 text-sm font-semibold text-white outline-none transition-colors hover:bg-hissa-action-hover focus-visible:ring-2 focus-visible:ring-hissa-action focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" :disabled="mutation.isPending.value || validationMessage !== null" :aria-busy="mutation.isPending.value">{{ mutation.isPending.value ? 'Saving…' : 'Mark for review' }}</button>
             </div>
         </form>
     </OpsDialog>

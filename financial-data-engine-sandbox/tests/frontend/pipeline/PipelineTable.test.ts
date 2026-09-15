@@ -55,4 +55,17 @@ describe('PipelineTable', () => {
         expect(empty.text()).toContain('No filings have been processed yet.');
         expect(filtered.text()).toContain('No filings match the current filters.');
     });
+
+    it('explains why an unavailable row action cannot be used', () => {
+        const unavailable = {
+            ...item,
+            allowedActions: {
+                ...item.allowedActions,
+                viewHistory: { allowed: false, reasonCode: 'HISTORY_UNAVAILABLE', reason: 'History is not available for this filing.' },
+            },
+        } as const;
+        const wrapper = mount(PipelineTable, { props: { rows: [unavailable], hasActiveFilters: false } });
+
+        expect(wrapper.text()).toContain('History unavailable: History is not available for this filing.');
+    });
 });

@@ -53,8 +53,8 @@ onBeforeUnmount(() => returnFocus?.focus());
 </script>
 
 <template>
-    <div class="fixed inset-0 z-[60] grid place-items-center bg-black/40 p-4" role="presentation" @mousedown.self="emit('close')">
-        <section ref="panel" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="descriptionId" tabindex="-1" class="w-full rounded-xl bg-hissa-surface p-6 shadow-xl outline-none" :class="panelClass" @keydown="handleKeydown">
+    <div class="fixed inset-0 z-[60] grid place-items-center bg-black/30 p-4 sm:p-6" role="presentation" @mousedown.self="emit('close')">
+        <section ref="panel" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="descriptionId" tabindex="-1" class="ops-dialog-panel max-h-[calc(100vh-32px)] w-full overscroll-contain overflow-y-auto rounded-hissa-xl border border-hissa-border bg-hissa-surface p-5 shadow-lg outline-none sm:max-h-[calc(100vh-48px)] sm:p-6" :class="panelClass" @keydown="handleKeydown">
             <slot />
         </section>
     </div>
