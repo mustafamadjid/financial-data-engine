@@ -37,6 +37,10 @@ describe('FilingDetailDrawer', () => {
 
         expect(wrapper.get('[role="dialog"]').text()).toContain('FIL-DETAIL-001');
         expect(document.activeElement).toBe(wrapper.get('[aria-label="Close filing detail"]').element);
+        await wrapper.get('[role="dialog"]').trigger('keydown', { key: 'Tab', shiftKey: true });
+        expect(document.activeElement?.textContent).toContain('Reprocess');
+        await wrapper.get('[role="dialog"]').trigger('keydown', { key: 'Tab' });
+        expect(document.activeElement).toBe(wrapper.get('[aria-label="Close filing detail"]').element);
         await wrapper.get('[role="dialog"]').trigger('keydown', { key: 'Escape' });
         expect(wrapper.emitted('close')).toHaveLength(1);
         queryClient.clear();

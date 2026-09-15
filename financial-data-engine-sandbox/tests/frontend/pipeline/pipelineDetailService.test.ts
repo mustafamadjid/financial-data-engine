@@ -19,7 +19,7 @@ describe('pipeline detail service', () => {
 
         const detail = await fetchPipelineFilingDetail('FIL-DETAIL-001');
 
-        expect(fetchMock).toHaveBeenCalledWith('/ops/data/pipeline-filings/FIL-DETAIL-001', expect.objectContaining({ credentials: 'same-origin' }));
+        expect(fetchMock).toHaveBeenCalledWith('/ops/data/pipeline-filings/FIL-DETAIL-001', expect.objectContaining({ credentials: 'omit' }));
         expect(detail.artifacts[0]?.filename).toBe('source.zip');
         expect(JSON.stringify(detail)).not.toContain('storage_path');
     });

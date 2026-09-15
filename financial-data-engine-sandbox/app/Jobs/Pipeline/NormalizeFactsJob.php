@@ -3,6 +3,7 @@
 namespace App\Jobs\Pipeline;
 
 use App\Application\Pipeline\PipelineOrchestrator;
+use App\Domain\FinancialData\Mapping\MappingSeriesKey;
 use App\Domain\FinancialData\Normalization\Exceptions\TerminalNormalizationException;
 use App\Domain\FinancialData\Normalization\NormalizationService;
 use App\Domain\FinancialData\Pipeline\PipelineIdempotencyKey;
@@ -203,15 +204,23 @@ final class NormalizeFactsJob extends PipelineJob
         $grouped = $query->get()->groupBy(fn (ConceptMapping $mapping): string => (string) $mapping->source_concept);
         $configuredVersion = config('financial-pipeline.normalization.mapping_version');
 
-        return $grouped->map(function ($group) use ($configuredVersion): array {
+        $selected = $grouped->map(function ($group) use ($configuredVersion): array {
             if ($configuredVersion !== null && trim((string) $configuredVersion) !== '') {
                 return $group->all();
             }
 
-            $latestVersion = $group->max('rule_version');
+            return $group
+                ->groupBy(fn (ConceptMapping $mapping): string => (string) ($mapping->mapping_series_key ?: MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point)))
+                ->flatMap(function ($series): array {
+                    $latestVersion = $series->max('rule_version');
 
-            return $group->where('rule_version', $latestVersion)->values()->all();
-        })->all();
+                    return $series->where('rule_version', $latestVersion)->values()->all();
+                })
+                ->values()
+                ->all();
+        });
+
+        return $selected->all();
     }
 
     /**

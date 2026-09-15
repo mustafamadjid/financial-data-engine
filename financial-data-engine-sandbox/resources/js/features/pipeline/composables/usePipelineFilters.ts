@@ -1,5 +1,6 @@
-import { computed, onScopeDispose, ref, watch, type ComputedRef, type Ref } from 'vue';
+import { computed, ref, watch, type ComputedRef, type Ref } from 'vue';
 
+import { useDebouncedValue } from '../../ops/composables/useDebouncedValue';
 import type { PipelineListParams, PipelinePerPage, PipelineProcessingStage, PipelineSort, QualityStatus } from '../types/pipeline';
 
 const DEFAULT_SORT: PipelineSort = 'last_processed_desc';
@@ -25,18 +26,17 @@ interface PipelineFilters {
 
 export function usePipelineFilters(options: PipelineFiltersOptions = {}): PipelineFilters {
     const initial = new URLSearchParams(options.search ?? '');
-    const searchInput = ref(initial.get('search') ?? '');
-    const debouncedSearch = ref(searchInput.value);
+    const search = useDebouncedValue(initial.get('search') ?? '', SEARCH_DEBOUNCE_MS);
+    const searchInput = search.input;
     const processingStage = ref<PipelineProcessingStage | undefined>(parseProcessingStage(initial.get('processing_stage')));
     const qualityStatus = ref<QualityStatus | undefined>(parseQualityStatus(initial.get('quality_status')));
     const period = ref(stringOrUndefined(initial.get('period')));
     const sort = ref<PipelineSort>(parseSort(initial.get('sort')));
     const page = ref(parsePositiveInteger(initial.get('page')) ?? 1);
     const perPage = ref<PipelinePerPage>(parsePerPage(initial.get('per_page')));
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const params = computed<PipelineListParams>(() => ({
-        search: stringOrUndefined(debouncedSearch.value),
+        search: stringOrUndefined(search.value),
         processingStage: processingStage.value,
         qualityStatus: qualityStatus.value,
         period: stringOrUndefined(period.value),
@@ -45,15 +45,7 @@ export function usePipelineFilters(options: PipelineFiltersOptions = {}): Pipeli
         perPage: perPage.value,
     }));
 
-    watch(searchInput, (value) => {
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-        }
-        timeoutId = setTimeout(() => {
-            debouncedSearch.value = value;
-            page.value = 1;
-        }, SEARCH_DEBOUNCE_MS);
-    });
+    watch(() => search.value, () => { page.value = 1; });
 
     watch([processingStage, qualityStatus, period, sort, perPage], () => {
         page.value = 1;
@@ -66,12 +58,6 @@ export function usePipelineFilters(options: PipelineFiltersOptions = {}): Pipeli
         },
         { deep: false },
     );
-
-    onScopeDispose(() => {
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-        }
-    });
 
     return {
         searchInput,

@@ -25,6 +25,7 @@ final readonly class ParsedFilingData
         public array $facts,
         public array $warnings = [],
         public array $errors = [],
+        public ?string $taxonomyEntryPoint = null,
     ) {}
 
     public function extractionIdentity(): string

@@ -1,5 +1,4 @@
 import type {
-    OpsError,
     PaginatedResponse,
     PipelineFilingListItem,
     PipelineFilingDetail,
@@ -10,21 +9,9 @@ import type {
     PipelineSummary,
     AcceptedOperation,
 } from '../types/pipeline';
+import { requestOps } from '../../ops/api/opsHttpClient';
 
-export class OpsHttpError extends Error {
-    public readonly code: string;
-    public readonly fieldErrors?: Record<string, string[]>;
-
-    public constructor(
-        public readonly status: number,
-        error: OpsError,
-    ) {
-        super(error.message);
-        this.name = 'OpsHttpError';
-        this.code = error.code;
-        this.fieldErrors = error.fieldErrors;
-    }
-}
+export { OpsHttpError } from '../../ops/api/opsHttpClient';
 
 export async function fetchPipelineFilings(params: PipelineListParams): Promise<PaginatedResponse<PipelineFilingListItem>> {
     const query = new URLSearchParams();
@@ -48,7 +35,7 @@ export async function fetchPipelineSummary(): Promise<PipelineSummary> {
 export async function retryPipelineStage(jobRunId: number, reason?: string): Promise<AcceptedOperation> {
     const response = await requestOps<unknown>(`/ops/actions/pipeline-job-runs/${jobRunId}/retry`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reason?.trim() ? { reason: reason.trim() } : {}),
     });
     if (!isRecord(response) || !isRecord(response.data) || response.data.operation !== 'retry') {
@@ -59,7 +46,7 @@ export async function retryPipelineStage(jobRunId: number, reason?: string): Pro
 
 export async function reprocessPipelineFiling(filingId: string, stage: string, reason: string): Promise<AcceptedOperation> {
     const response = await requestOps<unknown>(`/ops/actions/pipeline-filings/${encodeURIComponent(filingId)}/reprocess`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stage, reason }),
     });
     if (!isRecord(response) || !isRecord(response.data) || response.data.operation !== 'reprocess') throw new Error('The reprocess response is malformed.');
@@ -78,34 +65,6 @@ export async function fetchPipelineFilingHistory(
     const query = new URLSearchParams({ page: String(params.page), per_page: String(params.perPage) });
     const response = await requestOps<unknown>(`/ops/data/pipeline-filings/${encodeURIComponent(filingId)}/history?${query.toString()}`);
     return decodePipelineHistory(response);
-}
-
-async function requestOps<T>(url: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(url, {
-        ...init,
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json', ...(init.headers ?? {}) },
-    });
-    const body = await parseJson(response);
-
-    if (!response.ok) {
-        throw new OpsHttpError(response.status, decodeOpsError(body));
-    }
-
-    return body as T;
-}
-
-function csrfToken(): string {
-    if (typeof document === 'undefined') return '';
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-}
-
-async function parseJson(response: Response): Promise<unknown> {
-    try {
-        return await response.json();
-    } catch {
-        return null;
-    }
 }
 
 function decodePipelineList(value: unknown): PaginatedResponse<PipelineFilingListItem> {
@@ -192,19 +151,6 @@ function decodePipelineHistory(value: unknown): PaginatedResponse<PipelineHistor
     };
 }
 
-function decodeOpsError(value: unknown): OpsError {
-    if (!isRecord(value)) {
-        return { code: 'REQUEST_FAILED', message: 'The pipeline request could not be completed.' };
-    }
-
-    return {
-        code: typeof value.code === 'string' ? value.code : 'REQUEST_FAILED',
-        message: typeof value.message === 'string' ? value.message : 'The pipeline request could not be completed.',
-        fieldErrors: isFieldErrors(value.fieldErrors) ? value.fieldErrors : undefined,
-        requestId: typeof value.requestId === 'string' ? value.requestId : undefined,
-    };
-}
-
 function appendString(query: URLSearchParams, key: string, value: string | undefined): void {
     const normalized = value?.trim();
     if (normalized !== undefined && normalized !== '') {
@@ -237,8 +183,4 @@ function isPipelineHistoryEntry(value: unknown): value is PipelineHistoryEntry {
         && typeof value.id === 'string'
         && (value.type === 'pipelineRun' || value.type === 'jobAttempt' || value.type === 'auditEvent')
         && (value.actorId === null || typeof value.actorId === 'string');
-}
-
-function isFieldErrors(value: unknown): value is Record<string, string[]> {
-    return isRecord(value) && Object.values(value).every((messages) => Array.isArray(messages) && messages.every((message) => typeof message === 'string'));
 }

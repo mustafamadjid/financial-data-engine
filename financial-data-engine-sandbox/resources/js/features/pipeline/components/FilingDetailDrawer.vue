@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, toRef } from 'vue';
 
-import { OpsHttpError } from '../api/pipelineService';
 import { usePipelineDetailQuery } from '../composables/usePipelineDetailQuery';
 
 const props = withDefaults(defineProps<{ filingId: string; initialHistoryOpen?: boolean }>(), { initialHistoryOpen: false });
 const emit = defineEmits<{ close: [] }>();
 
 const closeButton = ref<HTMLButtonElement | null>(null);
+const dialogPanel = ref<HTMLElement | null>(null);
 const isHistoryOpen = ref(props.initialHistoryOpen);
 const detail = usePipelineDetailQuery(toRef(props, 'filingId'));
 const detailError = computed(() => detail.error.value instanceof Error ? detail.error.value : null);
-const isForbidden = computed(() => detailError.value instanceof OpsHttpError && detailError.value.status === 403);
 const dependencyVersionSummary = computed(() => {
     const versions = detail.data.value?.currentRun?.dependencyVersions;
     return versions === undefined ? 'Not recorded' : Object.entries(versions).map(([key, value]) => `${key} ${value}`).join(', ') || 'Not recorded';
@@ -33,6 +32,18 @@ function onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
         event.preventDefault();
         close();
+        return;
+    }
+    if (event.key !== 'Tab' || dialogPanel.value === null) return;
+    const focusable = Array.from(dialogPanel.value.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
     }
 }
 </script>
@@ -40,6 +51,7 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
     <div class="fixed inset-0 z-40 bg-black/30" aria-hidden="true" @click="close" />
     <aside
+        ref="dialogPanel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="filing-detail-title"
@@ -59,7 +71,7 @@ function onKeydown(event: KeyboardEvent): void {
                 <div v-for="placeholder in 4" :key="placeholder" class="h-12 animate-pulse rounded-lg bg-hissa-subtle" />
             </div>
             <div v-else-if="detail.isError.value" role="alert" class="rounded-xl border border-hissa-danger/30 bg-red-50 p-4">
-                <h3 class="font-semibold text-hissa-primary">{{ isForbidden ? 'You do not have permission to view this filing.' : 'Filing detail could not be loaded.' }}</h3>
+                <h3 class="font-semibold text-hissa-primary">Filing detail could not be loaded.</h3>
                 <p class="mt-1 text-sm text-hissa-secondary">{{ detailError?.message ?? 'Check your connection and try again.' }}</p>
                 <button type="button" class="mt-3 rounded-lg bg-hissa-action px-3 py-2 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-hissa-action focus-visible:ring-offset-2" @click="detail.refetch()">Try again</button>
             </div>

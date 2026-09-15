@@ -3,9 +3,13 @@
 return [
     'contract_version' => env('FINANCIAL_PIPELINE_CONTRACT_VERSION', '1.0.0'),
 
-    'ops' => [
-        'retry_actor_ids' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_OPS_RETRY_ACTOR_IDS', ''))))),
-        'reprocess_actor_ids' => array_values(array_filter(array_map('trim', explode(',', env('FINANCIAL_PIPELINE_OPS_REPROCESS_ACTOR_IDS', ''))))),
+    'debt_review' => [
+        'enabled' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_ENABLED', false),
+        'approved_da4_rule_version' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_DA4_RULE_VERSION'),
+        'approved_dictionary_version' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_DICTIONARY_VERSION'),
+        'evidence_resolution' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_EVIDENCE_RESOLUTION', false),
+        'pipeline_stable' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_PIPELINE_STABLE', false),
+        'page_design_approved' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_PAGE_DESIGN_APPROVED', false),
     ],
 
     'discovery' => [

@@ -5,7 +5,6 @@ use App\Models\AuditLog;
 use App\Models\Filing;
 use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
 
@@ -13,11 +12,9 @@ uses(DatabaseMigrations::class);
 
 it('accepts a transient latest failure while preserving run identity and incrementing attempt', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
-    config(['financial-pipeline.ops.retry_actor_ids' => [$user->getKey()]]);
     [$filing, $run, $failed] = retryFixture();
 
-    $response = $this->actingAs($user)->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry", ['reason' => 'Transient provider timeout.']);
+    $response = $this->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry", ['reason' => 'Transient provider timeout.']);
 
     $response->assertStatus(202)
         ->assertJsonPath('data.operation', 'retry')
@@ -30,22 +27,21 @@ it('accepts a transient latest failure while preserving run identity and increme
     expect(PipelineJobRun::query()->where('pipeline_run_id', $run->id)->where('stage', 'DOWNLOAD')->count())->toBe(2);
     expect(PipelineJobRun::query()->where('pipeline_run_id', $run->id)->where('attempt', 2)->value('correlation_id'))->toBe($run->correlation_id);
     expect(AuditLog::query()->where('action', 'pipeline.stage_retry_requested')->where('filing_id', $filing->filing_id)->exists())->toBeTrue();
+    expect(AuditLog::query()->where('action', 'pipeline.stage_retry_requested')->where('filing_id', $filing->filing_id)->value('actor_id'))->toBe('system');
     Queue::assertPushed(DownloadFilingJob::class);
 });
 
 it('rejects stale and overlapping retry attempts atomically', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
-    config(['financial-pipeline.ops.retry_actor_ids' => [$user->getKey()]]);
     [$filing, $run, $failed] = retryFixture();
     $newer = $failed->replicate(['id']);
     $newer->attempt = 2;
     $newer->save();
 
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
+    $this->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
         ->assertStatus(409)->assertJsonPath('code', 'STALE_ATTEMPT');
     $newer->forceFill(['status' => 'QUEUED'])->save();
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-job-runs/{$newer->id}/retry")
+    $this->postJson("/ops/actions/pipeline-job-runs/{$newer->id}/retry")
         ->assertStatus(409)->assertJsonPath('code', 'NOT_RETRYABLE');
     expect($filing->exists && $run->exists)->toBeTrue();
     Queue::assertNothingPushed();
@@ -53,26 +49,21 @@ it('rejects stale and overlapping retry attempts atomically', function (): void 
 
 it('rejects a non transient failure without dispatching', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
-    config(['financial-pipeline.ops.retry_actor_ids' => [$user->getKey()]]);
     [, , $failed] = retryFixture(['failure_classification' => 'TERMINAL']);
 
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
+    $this->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
         ->assertStatus(409)
         ->assertJsonPath('code', 'NOT_RETRYABLE');
 
     Queue::assertNothingPushed();
 });
 
-it('enforces retry authorization', function (): void {
+it('allows a public retry only when the failure is domain-eligible', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
-    config(['financial-pipeline.ops.retry_actor_ids' => []]);
     [, , $failed] = retryFixture();
 
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
-        ->assertForbidden();
-    Queue::assertNothingPushed();
+    $this->postJson("/ops/actions/pipeline-job-runs/{$failed->id}/retry")
+        ->assertAccepted();
 });
 
 /** @return array{0: Filing, 1: PipelineRun, 2: PipelineJobRun} */

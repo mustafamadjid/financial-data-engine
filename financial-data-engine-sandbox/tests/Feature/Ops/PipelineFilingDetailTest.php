@@ -5,23 +5,21 @@ use App\Models\Filing;
 use App\Models\FilingArtifact;
 use App\Models\PipelineJobRun;
 use App\Models\PipelineRun;
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Storage;
 
 uses(DatabaseMigrations::class);
 
-it('requires an authenticated session for detail history and artifact reads', function (): void {
+it('allows public detail history and artifact reads', function (): void {
     $filing = detailFiling('FIL-DETAIL-AUTH');
     $artifact = detailArtifact($filing, 'source.zip');
 
-    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}")->assertUnauthorized();
-    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history")->assertUnauthorized();
-    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")->assertUnauthorized();
+    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}")->assertOk();
+    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history")->assertOk();
+    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")->assertNotFound();
 });
 
 it('returns a sanitized filing detail projection without private pipeline fields', function (): void {
-    $user = User::factory()->create();
     $filing = detailFiling('FIL-DETAIL-001');
     $run = PipelineRun::query()->create([
         'filing_id' => $filing->filing_id,
@@ -54,8 +52,7 @@ it('returns a sanitized filing detail projection without private pipeline fields
     ]);
     detailArtifact($filing, '../../unsafe name.zip');
 
-    $this->actingAs($user)
-        ->getJson("/ops/data/pipeline-filings/{$filing->filing_id}")
+    $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}")
         ->assertOk()
         ->assertJsonPath('data.filingId', 'FIL-DETAIL-001')
         ->assertJsonPath('data.currentRun.pipelineRunId', $run->id)
@@ -71,7 +68,6 @@ it('returns a sanitized filing detail projection without private pipeline fields
 });
 
 it('returns a bounded newest-first history stream with stable pagination and sanitized audit data', function (): void {
-    $user = User::factory()->create();
     $filing = detailFiling('FIL-HISTORY-001');
     $run = PipelineRun::query()->create([
         'filing_id' => $filing->filing_id,
@@ -102,8 +98,7 @@ it('returns a bounded newest-first history stream with stable pagination and san
         'new_value' => ['storage_path' => '/private/path', 'status' => 'VERIFIED'], 'created_at' => '2026-09-09 09:10:00',
     ]);
 
-    $firstPage = $this->actingAs($user)
-        ->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history?per_page=10&page=1")
+    $firstPage = $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history?per_page=10&page=1")
         ->assertOk()
         ->assertJsonPath('data.0.type', 'auditEvent')
         ->assertJsonPath('data.0.actorId', 'operator-42')
@@ -114,8 +109,7 @@ it('returns a bounded newest-first history stream with stable pagination and san
         ->assertJsonPath('meta.perPage', 10)
         ->assertJsonPath('meta.total', 12);
 
-    $secondPage = $this->actingAs($user)
-        ->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history?per_page=10&page=2")
+    $secondPage = $this->getJson("/ops/data/pipeline-filings/{$filing->filing_id}/history?per_page=10&page=2")
         ->assertOk()
         ->assertJsonPath('data.0.type', 'jobAttempt')
         ->assertJsonPath('data.0.correlationId', $run->correlation_id);
@@ -125,32 +119,27 @@ it('returns a bounded newest-first history stream with stable pagination and san
 
 it('only streams an existing artifact owned by the filing with safe headers', function (): void {
     Storage::fake('local');
-    $user = User::factory()->create();
     $filing = detailFiling('FIL-ARTIFACT-001');
     $artifact = detailArtifact($filing, '../../quarterly report.zip');
     Storage::disk('local')->put($artifact->storage_path, 'artifact-content');
     $artifact->forceFill(['source_hash' => hash('sha256', 'artifact-content')])->save();
 
-    $this->actingAs($user)
-        ->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
+    $this->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
         ->assertOk()
         ->assertHeader('content-type', 'application/zip')
         ->assertHeader('content-disposition', 'attachment; filename=quarterly_report.zip');
 
     Storage::disk('local')->put($artifact->storage_path, 'tampered-content');
-    $this->actingAs($user)
-        ->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
+    $this->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
         ->assertNotFound();
     Storage::disk('local')->put($artifact->storage_path, 'artifact-content');
 
     $otherFiling = detailFiling('FIL-ARTIFACT-OTHER');
-    $this->actingAs($user)
-        ->get("/ops/data/pipeline-filings/{$otherFiling->filing_id}/artifacts/{$artifact->artifact_id}")
+    $this->get("/ops/data/pipeline-filings/{$otherFiling->filing_id}/artifacts/{$artifact->artifact_id}")
         ->assertNotFound();
 
     Storage::disk('local')->delete($artifact->storage_path);
-    $this->actingAs($user)
-        ->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
+    $this->get("/ops/data/pipeline-filings/{$filing->filing_id}/artifacts/{$artifact->artifact_id}")
         ->assertNotFound();
 });
 

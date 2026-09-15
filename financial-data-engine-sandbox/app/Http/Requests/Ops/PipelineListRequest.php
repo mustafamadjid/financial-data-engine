@@ -13,7 +13,7 @@ final class PipelineListRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /** @return array<string, array<int, mixed>> */

@@ -2,6 +2,7 @@
 
 namespace App\Services\Pipeline;
 
+use App\Domain\FinancialData\Mapping\MappingSeriesKey;
 use App\Models\ConceptMapping;
 
 final class MappingVersionResolver
@@ -17,10 +18,10 @@ final class MappingVersionResolver
         $mappings = ConceptMapping::query()
             ->where('status', 'APPROVED')
             ->orderBy('source_concept')
-            ->orderBy('mapping_rule_id')
             ->orderBy('rule_version')
-            ->get(['source_concept', 'mapping_rule_id', 'rule_version'])
-            ->groupBy('source_concept')
+            ->orderBy('mapping_rule_id')
+            ->get(['source_concept', 'entry_point', 'mapping_series_key', 'mapping_rule_id', 'rule_version'])
+            ->groupBy(fn (ConceptMapping $mapping): string => (string) ($mapping->mapping_series_key ?: MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point)))
             ->map(function ($group): array {
                 $latestVersion = $group->max('rule_version');
 

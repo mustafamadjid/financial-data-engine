@@ -123,8 +123,14 @@ final class NormalizationService
     {
         $context = $rawFact->relationLoaded('context') ? $rawFact->getRelation('context') : null;
         $canonical = $mapping->relationLoaded('canonicalConcept') ? $mapping->getRelation('canonicalConcept') : null;
+        $filing = $rawFact->relationLoaded('filing') ? $rawFact->getRelation('filing') : null;
         $scope = $context?->scope;
         $periodType = strtoupper((string) ($context?->period_type ?? ''));
+
+        $entryPoint = trim((string) $mapping->entry_point);
+        if ($entryPoint !== '' && ($filing === null || trim((string) $filing->taxonomy_entry_point) !== $entryPoint)) {
+            return false;
+        }
 
         foreach ([$mapping->allowed_scope, $canonical instanceof CanonicalConcept ? $canonical->allowed_scope : null] as $allowedScopes) {
             $allowedScopes = array_values(array_filter(array_map('strtoupper', (array) $allowedScopes)));

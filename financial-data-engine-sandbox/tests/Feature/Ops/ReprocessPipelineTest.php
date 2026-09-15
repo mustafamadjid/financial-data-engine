@@ -4,33 +4,24 @@ use App\Jobs\Pipeline\DownloadFilingJob;
 use App\Models\AuditLog;
 use App\Models\Filing;
 use App\Models\PipelineRun;
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
 
 uses(DatabaseMigrations::class);
 
-it('requires explicit reprocess authorization and validates stage and reason', function (): void {
-    $user = User::factory()->create();
+it('allows public reprocess requests while validating stage and reason', function (): void {
     $filing = reprocessFixture();
-    config(['financial-pipeline.ops.reprocess_actor_ids' => []]);
 
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'DOWNLOAD', 'reason' => 'valid reason'])
-        ->assertForbidden();
-
-    config(['financial-pipeline.ops.reprocess_actor_ids' => [$user->getKey()]]);
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'INVALID', 'reason' => 'x'])
+    $this->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'INVALID', 'reason' => 'x'])
         ->assertStatus(422)
         ->assertJsonPath('code', 'VALIDATION_ERROR');
 });
 
-it('starts an authorized reprocess with a new run and audit context', function (): void {
+it('starts a public reprocess with a system audit context', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
     $filing = reprocessFixture();
-    config(['financial-pipeline.ops.reprocess_actor_ids' => [$user->getKey()]]);
 
-    $response = $this->actingAs($user)->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'DOWNLOAD', 'reason' => 'Provider correction.']);
+    $response = $this->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'DOWNLOAD', 'reason' => 'Provider correction.']);
 
     $response->assertStatus(202)
         ->assertJsonPath('data.operation', 'reprocess')
@@ -38,24 +29,23 @@ it('starts an authorized reprocess with a new run and audit context', function (
         ->assertJsonPath('data.stage', 'DOWNLOAD');
     expect(PipelineRun::query()->where('filing_id', $filing->filing_id)->count())->toBe(1);
     expect(AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.reprocess_requested')->exists())->toBeTrue();
+    expect(AuditLog::query()->where('filing_id', $filing->filing_id)->where('action', 'filing.reprocess_requested')->value('actor_id'))->toBe('system');
     Queue::assertPushed(DownloadFilingJob::class);
 });
 
 it('maps missing prerequisites and overlapping runs to stable domain errors', function (): void {
     Queue::fake();
-    $user = User::factory()->create();
     $filing = reprocessFixture();
-    config(['financial-pipeline.ops.reprocess_actor_ids' => [$user->getKey()]]);
     PipelineRun::query()->create([
         'filing_id' => $filing->filing_id, 'trigger' => 'REPROCESS', 'started_from_stage' => 'DOWNLOAD',
         'status' => 'RUNNING', 'correlation_id' => '44444444-4444-4444-4444-444444444444', 'started_at' => now(),
     ]);
 
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'DOWNLOAD', 'reason' => 'Another attempt'])
+    $this->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'DOWNLOAD', 'reason' => 'Another attempt'])
         ->assertStatus(409)->assertJsonPath('code', 'ACTIVE_OPERATION');
 
     PipelineRun::query()->delete();
-    $this->actingAs($user)->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'NORMALIZE', 'reason' => 'No raw facts'])
+    $this->postJson("/ops/actions/pipeline-filings/{$filing->filing_id}/reprocess", ['stage' => 'NORMALIZE', 'reason' => 'No raw facts'])
         ->assertStatus(422)->assertJsonPath('code', 'PREREQUISITE_MISSING');
     Queue::assertNothingPushed();
 });
