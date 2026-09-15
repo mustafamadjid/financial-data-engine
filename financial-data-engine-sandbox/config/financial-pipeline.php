@@ -3,6 +3,15 @@
 return [
     'contract_version' => env('FINANCIAL_PIPELINE_CONTRACT_VERSION', '1.0.0'),
 
+    'debt_review' => [
+        'enabled' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_ENABLED', false),
+        'approved_da4_rule_version' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_DA4_RULE_VERSION'),
+        'approved_dictionary_version' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_DICTIONARY_VERSION'),
+        'evidence_resolution' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_EVIDENCE_RESOLUTION', false),
+        'pipeline_stable' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_PIPELINE_STABLE', false),
+        'page_design_approved' => env('FINANCIAL_PIPELINE_DEBT_REVIEW_PAGE_DESIGN_APPROVED', false),
+    ],
+
     'discovery' => [
         'disk' => env('FINANCIAL_PIPELINE_DISCOVERY_DISK', env('FINANCIAL_PIPELINE_STORAGE_DISK', 'local')),
         'fixture_path' => env('FINANCIAL_PIPELINE_DISCOVERY_FIXTURE_PATH', 'financial-pipeline/discovery/candidates.json'),

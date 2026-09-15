@@ -14,6 +14,7 @@ export interface FinancialFactListItem {
     scope: FinancialScope | null;
     dataType: 'REPORTED' | 'DERIVED';
     sourceConcept: string;
+    reviewVersion: string;
     normalizationStatus: NormalizationStatus;
     validationStatus: FinancialValidationStatus;
     allowedActions: Record<'openEvidence' | 'openMapping' | 'markForReview', ActionCapability>;

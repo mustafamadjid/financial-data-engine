@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['review_item_id', 'entity_type', 'entity_id', 'filing_id', 'status', 'rationale', 'created_by', 'resolved_by', 'resolution_rationale', 'expected_version', 'active_identity', 'resolved_at'])]
+#[Fillable(['review_item_id', 'entity_type', 'entity_id', 'filing_id', 'status', 'rationale', 'created_by', 'resolved_by', 'resolution_rationale', 'expected_version', 'active_identity', 'idempotency_key', 'resolved_at'])]
 final class ReviewItem extends Model
 {
     protected $primaryKey = 'review_item_id';

@@ -1,0 +1,45 @@
+<script setup lang="ts">
+import { computed, defineAsyncComponent, ref } from 'vue';
+import OpsLayout from '../../Layouts/OpsLayout.vue';
+import AsyncState from '../../components/ops/AsyncState.vue';
+import DataTable from '../../components/ops/DataTable.vue';
+import StatusBadge from '../../components/ops/StatusBadge.vue';
+import { useValidationDetailQuery, useValidationResultsQuery, useValidationSummaryQuery } from '../../features/data-quality/queries/useDataQualityQuery';
+import type { ValidationListParams, ValidationResult, ValidationSeverity } from '../../features/data-quality/types/dataQuality';
+
+const DetailDialog = defineAsyncComponent(() => import('../../features/data-quality/components/ValidationDetailDialog.vue'));
+const initial = typeof window === 'undefined' ? new URLSearchParams() : new URLSearchParams(window.location.search);
+const filingId = ref(initial.get('filing_id') ?? '');
+const datasetVersion = ref(initial.get('dataset_version') ?? '');
+const ruleSetVersion = ref(initial.get('rule_set_version') ?? '');
+const severity = ref<ValidationSeverity | ''>((initial.get('severity') as ValidationSeverity | null) ?? '');
+const result = ref<ValidationResult | ''>((initial.get('result') as ValidationResult | null) ?? '');
+const page = ref(Number(initial.get('page') ?? 1));
+const selectedId = ref<string | null>(null);
+const params = computed<ValidationListParams>(() => ({ page: page.value, perPage: 25, severity: severity.value || undefined, result: result.value || undefined }));
+const list = useValidationResultsQuery(filingId, datasetVersion, ruleSetVersion, params);
+const summary = useValidationSummaryQuery(filingId, datasetVersion, ruleSetVersion);
+const detail = useValidationDetailQuery(selectedId, filingId, datasetVersion, ruleSetVersion);
+const rows = computed(() => list.data.value?.data ?? []);
+const pagination = computed(() => list.data.value?.meta);
+const hasExecution = computed(() => filingId.value !== '' && datasetVersion.value !== '' && ruleSetVersion.value !== '');
+const errorMessage = computed(() => list.error.value instanceof Error ? list.error.value.message : 'Check your connection and try again.');
+
+function applyFilter(): void { page.value = 1; }
+function tone(value: string): 'neutral' | 'success' | 'warning' | 'danger' { return value === 'PASS' || value === 'VERIFIED' ? 'success' : value === 'FAIL' || value === 'FAILED' ? 'danger' : value === 'REVIEW_REQUIRED' || value === 'WARN' ? 'warning' : 'neutral'; }
+</script>
+
+<template>
+    <OpsLayout page-id="data-quality" title="Data Quality" description="Inspect version-scoped validation outcomes and their input facts.">
+        <template #status><StatusBadge :label="list.isFetching.value || summary.isFetching.value ? 'Refreshing' : 'Read-only'" :tone="list.isFetching.value || summary.isFetching.value ? 'info' : 'neutral'" /></template>
+        <section class="rounded-xl border border-hissa-border bg-hissa-surface p-4 sm:p-5" aria-labelledby="quality-filters"><div class="grid gap-4 lg:grid-cols-5 lg:items-end"><label class="text-sm font-medium">Filing ID<input v-model.trim="filingId" type="text" placeholder="FIL-..." class="mt-1 min-h-10 w-full rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm" @change="applyFilter"></label><label class="text-sm font-medium">Dataset version<input v-model.trim="datasetVersion" type="text" placeholder="dataset-v2" class="mt-1 min-h-10 w-full rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm" @change="applyFilter"></label><label class="text-sm font-medium">Rule-set version<input v-model.trim="ruleSetVersion" type="text" placeholder="rules-v3" class="mt-1 min-h-10 w-full rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm" @change="applyFilter"></label><label class="text-sm font-medium">Severity<select v-model="severity" class="mt-1 min-h-10 w-full rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm" @change="applyFilter"><option value="">All severities</option><option value="ERROR">Error</option><option value="WARN">Warning</option><option value="INFO">Info</option></select></label><label class="text-sm font-medium">Result<select v-model="result" class="mt-1 min-h-10 w-full rounded-lg border border-hissa-border bg-hissa-surface px-3 text-sm" @change="applyFilter"><option value="">All results</option><option value="PASS">Pass</option><option value="FAIL">Fail</option><option value="REVIEW_REQUIRED">Review required</option><option value="SKIPPED">Skipped</option></select></label></div><p id="quality-filters" class="mt-3 text-xs text-hissa-secondary">Select all three execution identifiers before querying. Results from another dataset or rule-set are never mixed.</p></section>
+        <AsyncState v-if="!hasExecution" state="empty" title="Select an active execution" message="Provide filing, dataset, and rule-set versions to inspect validation results." />
+        <template v-else>
+            <AsyncState v-if="list.isPending.value" state="loading" title="Loading validation results" message="Fetching the selected quality execution." />
+            <AsyncState v-else-if="list.isError.value" state="error" title="Validation results could not be loaded" :message="errorMessage"><template #action><button type="button" class="rounded-lg bg-hissa-action px-3 py-2 text-sm font-semibold text-white" @click="list.refetch">Try again</button></template></AsyncState>
+            <AsyncState v-else-if="rows.length === 0" state="empty" title="No validation results found" message="Try another execution or filter." />
+            <section v-else class="overflow-hidden rounded-xl border border-hissa-border bg-hissa-surface" aria-labelledby="quality-table-heading"><div class="flex flex-wrap items-center justify-between gap-3 border-b border-hissa-border px-4 py-4 sm:px-6"><div><h2 id="quality-table-heading" class="text-lg font-semibold">Validation results</h2><p class="mt-1 text-sm text-hissa-secondary">{{ pagination?.total ?? rows.length }} results · {{ datasetVersion }} · {{ ruleSetVersion }}</p></div><div class="flex flex-wrap items-center gap-2"><a :href="`/ops/pipeline?filing_id=${encodeURIComponent(filingId)}`" class="rounded-lg border border-hissa-border px-3 py-2 text-sm font-semibold text-hissa-action hover:bg-hissa-secondary-soft">Open reprocess handoff</a><template v-if="summary.data.value"><StatusBadge :label="`${summary.data.value.total} checks`" tone="neutral" /><StatusBadge :label="summary.data.value.qualityStatus" :tone="tone(summary.data.value.qualityStatus)" /></template></div></div><DataTable min-width-class="min-w-[900px]"><template #caption>Data quality validation results</template><thead class="bg-hissa-subtle text-xs uppercase tracking-wide text-hissa-secondary"><tr><th class="px-4 py-3 font-semibold">Rule</th><th class="px-4 py-3 font-semibold">Result</th><th class="px-4 py-3 font-semibold">Message</th><th class="px-4 py-3 font-semibold">Inputs</th><th class="px-4 py-3 text-right font-semibold">Action</th></tr></thead><tbody><tr v-for="row in rows" :key="row.validationResultId" class="border-t border-hissa-border align-top hover:bg-hissa-subtle/70"><td class="px-4 py-4"><p class="font-semibold">{{ row.rule.code }}</p><p class="text-xs text-hissa-secondary">v{{ row.rule.version }} · {{ row.rule.description ?? 'No rule description' }}</p></td><td class="space-y-1 px-4 py-4"><StatusBadge :label="row.result" :tone="tone(row.result)" /><StatusBadge :label="row.severity" :tone="tone(row.severity)" /></td><td class="max-w-sm px-4 py-4 text-sm text-hissa-secondary">{{ row.message ?? 'No message provided.' }}</td><td class="px-4 py-4 text-sm"><span>{{ row.inputFacts.length }} linked fact(s)</span><div class="mt-1 flex flex-wrap gap-1"><a v-for="fact in row.inputFacts.slice(0, 3)" :key="fact.normalizedFactId" :href="fact.href" class="font-mono text-xs text-hissa-action underline">{{ fact.normalizedFactId }}</a></div></td><td class="px-4 py-4 text-right"><button type="button" class="rounded-lg border border-hissa-border px-3 py-2 text-sm font-semibold text-hissa-action hover:bg-hissa-secondary-soft" @click="selectedId = row.validationResultId">Inspect</button></td></tr></tbody></DataTable><div v-if="pagination && pagination.lastPage > 1" class="flex items-center justify-between border-t border-hissa-border px-4 py-3 text-sm"><span class="text-hissa-secondary">Page {{ pagination.currentPage }} of {{ pagination.lastPage }}</span><div class="flex gap-2"><button type="button" class="rounded-lg border border-hissa-border px-3 py-2 disabled:opacity-50" :disabled="page <= 1" @click="page--">Previous</button><button type="button" class="rounded-lg border border-hissa-border px-3 py-2 disabled:opacity-50" :disabled="page >= pagination.lastPage" @click="page++">Next</button></div></div></section>
+        </template>
+        <DetailDialog v-if="selectedId !== null" :detail="detail.data.value" :loading="detail.isPending.value" :error="detail.error.value instanceof Error ? detail.error.value.message : null" @close="selectedId = null" @retry="detail.refetch" />
+    </OpsLayout>
+</template>

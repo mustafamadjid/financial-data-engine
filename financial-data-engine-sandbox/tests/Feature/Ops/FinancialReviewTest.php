@@ -38,6 +38,7 @@ it('filters financial facts on the server and returns a detailed lineage project
         ->assertJsonPath('data.rawFact.rawFactId', 'RAW-FIN-001')
         ->assertJsonPath('data.rawFact.unit.currency', 'IDR')
         ->assertJsonPath('data.mapping.entryPoint', 'general')
+        ->assertJsonPath('data.reviewVersion', '1.0.0@mapping-1|MAP-FIN-001|2')
         ->assertJsonPath('data.allowedActions.markForReview.allowed', true);
 });
 

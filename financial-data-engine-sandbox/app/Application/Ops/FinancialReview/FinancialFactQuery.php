@@ -92,6 +92,11 @@ final class FinancialFactQuery
             'validationStatus' => $fact->validation_status,
             'sourceConcept' => $fact->source_concept,
             'normalizationVersion' => $fact->normalization_version,
+            'reviewVersion' => implode('|', [
+                (string) $fact->normalization_version,
+                (string) $fact->mapping_rule_id,
+                (string) $fact->mapping_rule_version,
+            ]),
             'mapping' => $mapping === null ? null : [
                 'mappingRuleId' => $mapping->mapping_rule_id,
                 'mappingSeriesKey' => $mapping->mapping_series_key,

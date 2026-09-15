@@ -3,8 +3,13 @@
 use App\Http\Controllers\Ops\ConceptMappingDataController;
 use App\Http\Controllers\Ops\ConceptMappingPageController;
 use App\Http\Controllers\Ops\CreateMappingVersionController;
+use App\Http\Controllers\Ops\DataQualityController;
+use App\Http\Controllers\Ops\DataQualityPageController;
+use App\Http\Controllers\Ops\DebtReviewDataController;
+use App\Http\Controllers\Ops\DebtReviewPageController;
 use App\Http\Controllers\Ops\FinancialFactController;
 use App\Http\Controllers\Ops\FinancialReviewPageController;
+use App\Http\Controllers\Ops\MarkReviewItemController;
 use App\Http\Controllers\Ops\PipelineDataController;
 use App\Http\Controllers\Ops\PipelineFilingDetailController;
 use App\Http\Controllers\Ops\PipelinePageController;
@@ -21,12 +26,20 @@ Route::prefix('ops')->name('ops.')->group(function (): void {
     Route::get('/pipeline', PipelinePageController::class)->name('pipeline');
     Route::get('/financial-review', FinancialReviewPageController::class)->name('financial-review');
     Route::get('/concept-mappings', ConceptMappingPageController::class)->name('concept-mappings');
+    Route::get('/data-quality', DataQualityPageController::class)->name('data-quality');
+    Route::get('/debt-review', DebtReviewPageController::class)->name('debt-review');
 
     Route::prefix('data')->name('data.')->group(function (): void {
         Route::get('/pipeline-filings', [PipelineDataController::class, 'index'])->name('pipeline-filings.index');
         Route::get('/pipeline-summary', [PipelineDataController::class, 'summary'])->name('pipeline-summary');
         Route::get('/financial-facts', [FinancialFactController::class, 'index'])->name('financial-facts.index');
         Route::get('/financial-facts/{normalizedFact}', [FinancialFactController::class, 'show'])->name('financial-facts.show');
+        Route::get('/validation-results', [DataQualityController::class, 'index'])->name('validation-results.index');
+        Route::get('/validation-summary', [DataQualityController::class, 'summary'])->name('validation-summary');
+        Route::get('/validation-results/{validationResult}', [DataQualityController::class, 'show'])->name('validation-results.show');
+        Route::get('/debt-records', [DebtReviewDataController::class, 'index'])->name('debt-records.index');
+        Route::get('/debt-records/{debtRecord}', [DebtReviewDataController::class, 'show'])->name('debt-records.show');
+        Route::get('/debt-coverage', [DebtReviewDataController::class, 'coverage'])->name('debt-coverage');
         Route::get('/concept-mappings/canonical-options', [ConceptMappingDataController::class, 'canonicalOptions'])->name('concept-mappings.canonical-options');
         Route::get('/concept-mappings/{mappingSeries}/history', [ConceptMappingDataController::class, 'history'])->name('concept-mappings.history');
         Route::get('/concept-mappings/{mappingSeries}/impact', [ConceptMappingDataController::class, 'impact'])->name('concept-mappings.impact');
@@ -39,4 +52,5 @@ Route::prefix('ops')->name('ops.')->group(function (): void {
     Route::post('/actions/pipeline-filings/{filing}/reprocess', PipelineReprocessController::class)->name('actions.pipeline-filings.reprocess');
     Route::post('/actions/concept-mappings/{mappingSeries}/versions', CreateMappingVersionController::class)->name('actions.concept-mappings.versions.store');
     Route::post('/actions/concept-mappings/{mappingSeries}/reprocess', ReprocessAffectedFilingsController::class)->name('actions.concept-mappings.reprocess');
+    Route::post('/actions/review-items', MarkReviewItemController::class)->name('actions.review-items.store');
 });
