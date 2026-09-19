@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['filing_id', 'issuer_code', 'report_type', 'fiscal_year', 'fiscal_period', 'period_start', 'period_end', 'source_url', 'source_type', 'taxonomy_entry_point', 'storage_path', 'source_hash', 'revision_number', 'supersedes_filing_id', 'discovered_at', 'downloaded_at', 'processing_stage', 'quality_status'])]
+#[Fillable(['filing_id', 'external_filing_id', 'issuer_code', 'report_type', 'fiscal_year', 'fiscal_period', 'period_start', 'period_end', 'source_url', 'source_type', 'taxonomy_entry_point', 'presentation_currency', 'storage_path', 'source_hash', 'revision_number', 'supersedes_filing_id', 'revision_chain_id', 'discovered_at', 'publication_timestamp', 'official_source_available', 'official_pdf_url', 'official_xlsx_url', 'official_ixbrl_url', 'downloaded_at', 'processing_stage', 'quality_status'])]
 class Filing extends Model
 {
     protected $primaryKey = 'filing_id';
@@ -25,6 +25,8 @@ class Filing extends Model
             'period_end' => 'date',
             'discovered_at' => 'datetime',
             'downloaded_at' => 'datetime',
+            'publication_timestamp' => 'datetime',
+            'official_source_available' => 'boolean',
         ];
     }
 

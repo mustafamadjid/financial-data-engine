@@ -15,6 +15,7 @@ final class CreateMappingVersion
     /**
      * @param  array{
      *     source_concept: string,
+     *     source_namespace: string|null,
      *     entry_point: string|null,
      *     canonical_concept: string,
      *     allowed_scope: array<int, string>|null,
@@ -29,8 +30,11 @@ final class CreateMappingVersion
     public function execute(string $mappingSeries, array $attributes): ConceptMapping
     {
         $sourceConcept = trim($attributes['source_concept']);
+        $sourceNamespace = isset($attributes['source_namespace']) && $attributes['source_namespace'] !== null
+            ? trim((string) $attributes['source_namespace'])
+            : null;
         $entryPoint = $attributes['entry_point'] === null ? null : trim($attributes['entry_point']);
-        $derivedSeries = MappingSeriesKey::from($sourceConcept, $entryPoint);
+        $derivedSeries = MappingSeriesKey::from($sourceConcept, $entryPoint, $sourceNamespace);
 
         if (! hash_equals($derivedSeries, $mappingSeries)) {
             throw new MappingMutationException(
@@ -40,7 +44,7 @@ final class CreateMappingVersion
         }
 
         try {
-            return DB::transaction(function () use ($mappingSeries, $attributes, $sourceConcept, $entryPoint): ConceptMapping {
+            return DB::transaction(function () use ($mappingSeries, $attributes, $sourceConcept, $sourceNamespace, $entryPoint): ConceptMapping {
                 $latest = ConceptMapping::query()
                     ->where('mapping_series_key', $mappingSeries)
                     ->orderByDesc('rule_version')
@@ -65,6 +69,7 @@ final class CreateMappingVersion
                     'mapping_series_key' => $mappingSeries,
                     'supersedes_mapping_rule_id' => $latest?->mapping_rule_id,
                     'source_concept' => $sourceConcept,
+                    'source_namespace' => $sourceNamespace,
                     'entry_point' => $entryPoint,
                     'canonical_concept' => $attributes['canonical_concept'],
                     'allowed_scope' => $attributes['allowed_scope'],
@@ -137,6 +142,7 @@ final class CreateMappingVersion
             'mapping_series_key' => (string) $mapping->mapping_series_key,
             'supersedes_mapping_rule_id' => $mapping->supersedes_mapping_rule_id,
             'source_concept' => (string) $mapping->source_concept,
+            'source_namespace' => $mapping->source_namespace,
             'entry_point' => $mapping->entry_point,
             'canonical_concept' => (string) $mapping->canonical_concept,
             'allowed_scope' => $mapping->allowed_scope,

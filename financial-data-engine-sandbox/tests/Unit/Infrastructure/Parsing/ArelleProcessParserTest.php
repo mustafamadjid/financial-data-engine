@@ -59,6 +59,70 @@ it('rejects an invalid contract version', function () {
         ->toThrow(TerminalParserException::class);
 });
 
+it('accepts v2 taxonomy and source element lineage', function () {
+    $payload = parseBridgePayload();
+    $payload['parser_contract_version'] = '2.0.0';
+    $payload['taxonomy'] = [
+        'target_namespace' => 'urn:idx:2020',
+        'imports' => ['urn:idx:2020.xsd'],
+        'import_locations' => ['https://example.test/idx.xsd'],
+        'linkbase_roles' => [],
+        'linkbase_references' => [],
+        'statement_families' => [],
+    ];
+    $payload['facts'][0]['source_element_id'] = 'fact-xml-1';
+    $context = new ParserExecutionContext('FIL-PARSER-1', hash('sha256', 'parser-artifact'), '1.0.0', '1.0.0', 'corr-parser-1', '2.0.0');
+
+    expect(app(ParserOutputValidator::class)->validate($payload, $context)->taxonomy['target_namespace'])->toBe('urn:idx:2020');
+});
+
+it('rejects v2 facts without source element identity', function () {
+    $payload = parseBridgePayload();
+    $payload['parser_contract_version'] = '2.0.0';
+    $payload['taxonomy'] = validTaxonomyPayload();
+    $context = new ParserExecutionContext('FIL-PARSER-1', hash('sha256', 'parser-artifact'), '1.0.0', '1.0.0', 'corr-parser-1', '2.0.0');
+
+    expect(fn () => app(ParserOutputValidator::class)->validate($payload, $context))
+        ->toThrow(TerminalParserException::class);
+});
+
+it('rejects malformed taxonomy, duplicate IDs, and warning metadata', function () {
+    $context = new ParserExecutionContext('FIL-PARSER-1', hash('sha256', 'parser-artifact'), '1.0.0', '1.0.0', 'corr-parser-1', '2.0.0');
+
+    $malformedTaxonomy = parseBridgePayload();
+    $malformedTaxonomy['parser_contract_version'] = '2.0.0';
+    $malformedTaxonomy['taxonomy'] = ['imports' => 'not-an-array'];
+    expect(fn () => app(ParserOutputValidator::class)->validate($malformedTaxonomy, $context))
+        ->toThrow(TerminalParserException::class);
+
+    $duplicateFacts = parseBridgePayload();
+    $duplicateFacts['parser_contract_version'] = '2.0.0';
+    $duplicateFacts['taxonomy'] = validTaxonomyPayload();
+    $duplicateFacts['facts'][0]['source_element_id'] = 'fact-xml-1';
+    $duplicateFacts['facts'][] = $duplicateFacts['facts'][0];
+    $duplicateFacts['counts']['facts'] = 2;
+    expect(fn () => app(ParserOutputValidator::class)->validate($duplicateFacts, $context))
+        ->toThrow(TerminalParserException::class);
+
+    $invalidWarning = parseBridgePayload();
+    $invalidWarning['warnings'] = [['code' => 'WARN', 'message' => 'bad', 'suppressed_count' => '1']];
+    expect(fn () => app(ParserOutputValidator::class)->validate($invalidWarning, parseBridgeContext()))
+        ->toThrow(TerminalParserException::class);
+});
+
+/** @return array<string, mixed> */
+function validTaxonomyPayload(): array
+{
+    return [
+        'target_namespace' => 'urn:idx:2020',
+        'imports' => ['urn:idx:2020.xsd'],
+        'import_locations' => ['https://example.test/idx.xsd'],
+        'linkbase_roles' => [],
+        'linkbase_references' => [],
+        'statement_families' => [],
+    ];
+}
+
 function parseBridgeContext(): ParserExecutionContext
 {
     return new ParserExecutionContext(

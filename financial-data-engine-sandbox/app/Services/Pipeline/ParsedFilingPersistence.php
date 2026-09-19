@@ -5,6 +5,7 @@ namespace App\Services\Pipeline;
 use App\Domain\FinancialData\Parsing\ParsedFilingData;
 use App\Domain\FinancialData\Parsing\ParserExecutionContext;
 use App\Models\Filing;
+use App\Models\FilingTaxonomyMetadata;
 use App\Models\RawFact;
 use App\Models\XbrlContext;
 use App\Models\XbrlDimension;
@@ -80,6 +81,7 @@ final class ParsedFilingPersistence
                         'filing_id' => $filing->filing_id,
                         'source_concept' => $record['source_concept'],
                         'source_namespace' => $record['source_namespace'] ?? null,
+                        'source_element_id' => $record['source_element_id'] ?? null,
                         'raw_value' => $record['raw_value'],
                         'normalized_numeric_value' => $record['normalized_numeric_value'] ?? null,
                         'context_ref' => $contextIds[$record['context_ref']],
@@ -90,6 +92,24 @@ final class ParsedFilingPersistence
                         'fact_status' => $record['fact_status'],
                         'parser_version' => $context->parserVersion,
                         'parser_config_version' => $context->parserConfigVersion,
+                    ],
+                );
+            }
+
+            if ($data->taxonomy !== []) {
+                FilingTaxonomyMetadata::query()->updateOrCreate(
+                    ['filing_id' => $filing->filing_id],
+                    [
+                        'parser_version' => $context->parserVersion,
+                        'parser_config_version' => $context->parserConfigVersion,
+                        'contract_version' => $context->contractVersion,
+                        'target_namespace' => $data->taxonomy['target_namespace'] ?? null,
+                        'imports' => $data->taxonomy['imports'] ?? [],
+                        'import_locations' => $data->taxonomy['import_locations'] ?? [],
+                        'linkbase_roles' => $data->taxonomy['linkbase_roles'] ?? [],
+                        'linkbase_references' => $data->taxonomy['linkbase_references'] ?? [],
+                        'statement_families' => $data->taxonomy['statement_families'] ?? [],
+                        'extracted_at' => now(),
                     ],
                 );
             }

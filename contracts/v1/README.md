@@ -51,3 +51,7 @@ Contract memakai Semantic Versioning. PATCH memperbaiki dokumentasi/example; MIN
 Fixture valid berada di `fixtures/`, negative fixture di `fixtures/invalid/`. Test `tests/test_contracts.py` memeriksa envelope, metadata field, enum, fixture required fields, dan semua relasi lineage. Contract v1 belum mencakup migration, model Laravel/Pydantic, endpoint, OpenAPI, atau backfill produksi.
 
 Contract tetap memerlukan review Full Stack Engineer dan Data Analyst sebelum dinyatakan stable.
+
+Contract v2 di `contracts/v2` adalah target write contract untuk alignment
+DA-1-3. Contract v1 dipertahankan untuk historical read compatibility dan tidak
+boleh menerima mapping/source data baru setelah cutover v2.

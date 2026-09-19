@@ -36,22 +36,34 @@ final class FilingPublishPayloadBuilder
             ->orderBy('validation_result_id')
             ->get();
 
-        $normalizedFactIds = $validationResults
-            ->flatMap(fn (ValidationResult $result): array => array_values((array) $result->normalized_fact_ids))
-            ->unique()
-            ->sort()
-            ->values();
-
         $normalizedFacts = NormalizedFact::query()
             ->where('filing_id', $filing->filing_id)
-            ->whereIn('normalized_fact_id', $normalizedFactIds->all())
+            ->where('normalized_dataset_version', $latestValidation->normalized_dataset_version)
             ->orderBy('normalized_fact_id')
             ->get();
+
+        $hasDatasetTaggedFacts = NormalizedFact::query()
+            ->where('filing_id', $filing->filing_id)
+            ->whereNotNull('normalized_dataset_version')
+            ->exists();
+
+        if ($normalizedFacts->isEmpty() && ! $hasDatasetTaggedFacts) {
+            $legacyIds = $validationResults
+                ->flatMap(fn (ValidationResult $result): array => array_values((array) $result->normalized_fact_ids))
+                ->unique()
+                ->sort()
+                ->values();
+            $normalizedFacts = NormalizedFact::query()
+                ->where('filing_id', $filing->filing_id)
+                ->whereIn('normalized_fact_id', $legacyIds->all())
+                ->orderBy('normalized_fact_id')
+                ->get();
+        }
 
         $rawFactIds = $normalizedFacts->pluck('raw_fact_id')->filter()->unique()->sort()->values();
         $mappingVersions = $normalizedFacts->pluck('normalization_version')->filter()->unique()->sort()->values();
 
-        if ($normalizedFacts->isEmpty() || $rawFactIds->isEmpty() || $mappingVersions->isEmpty() || $validationResults->isEmpty()) {
+        if ($normalizedFacts->isEmpty() || $rawFactIds->isEmpty() || $mappingVersions->isEmpty() || $mappingVersions->count() > 1 || $validationResults->isEmpty()) {
             throw new InvalidPublishContractException(['validated normalized lineage is incomplete']);
         }
 
@@ -85,7 +97,8 @@ final class FilingPublishPayloadBuilder
                 'normalized_fact_id' => (string) $fact->normalized_fact_id,
                 'raw_fact_id' => (string) $fact->raw_fact_id,
                 'canonical_concept' => (string) $fact->canonical_concept,
-                'value' => (string) $fact->value,
+                'value' => $fact->value === null ? null : (string) $fact->value,
+                'availability_status' => (string) ($fact->availability_status ?: 'UNKNOWN'),
                 'currency' => $fact->currency,
                 'scope' => $fact->scope,
                 'period_start' => $fact->period_start?->format('Y-m-d'),

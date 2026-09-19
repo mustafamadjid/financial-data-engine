@@ -11,6 +11,7 @@ use App\Domain\FinancialData\Publishing\PublishContractValidator;
 use App\Domain\FinancialData\Publishing\PublishLimitationsCollector;
 use App\Domain\FinancialData\Validation\Contracts\ValidationRuleProvider;
 use App\Domain\FinancialData\Validation\DatabaseValidationRuleProvider;
+use App\Domain\FinancialData\Validation\DaValidationRule;
 use App\Domain\FinancialData\Validation\ValidationRuleRegistry;
 use App\Infrastructure\Discovery\ConfiguredFilingDiscoverySource;
 use App\Infrastructure\Download\ConfiguredFilingArtifactDownloader;
@@ -42,9 +43,15 @@ class AppServiceProvider extends ServiceProvider
             contractVersion: (string) config('financial-pipeline.publish.contract_version', '1.0.0'),
         ));
         $this->app->bind(ReprocessService::class);
-        $this->app->singleton(ValidationRuleRegistry::class, fn (): ValidationRuleRegistry => new ValidationRuleRegistry(
-            (array) config('financial-pipeline.validation.rules', []),
-        ));
+        $this->app->singleton(ValidationRuleRegistry::class, function (): ValidationRuleRegistry {
+            $codes = (array) config('financial-pipeline.validation.mandatory_rule_codes', []);
+            $defaults = [];
+            foreach ($codes as $code) {
+                $defaults[$code] = new DaValidationRule((string) $code);
+            }
+
+            return new ValidationRuleRegistry(array_replace($defaults, (array) config('financial-pipeline.validation.rules', [])));
+        });
         $this->app->bind(ValidationRuleProvider::class, DatabaseValidationRuleProvider::class);
     }
 

@@ -1,0 +1,24 @@
+{
+  "contract": "xbrl_parser_result",
+  "version": "2.0.0",
+  "description": "Deterministic one-shot raw XBRL extraction result.",
+  "type": "object",
+  "required": ["parser_contract", "parser_contract_version", "status", "filing_id", "source", "runtime", "taxonomy", "counts", "contexts", "units", "dimensions", "facts", "warnings", "errors"],
+  "additionalProperties": false,
+  "properties": {
+    "parser_contract": {"const": "xbrl_parser_result"},
+    "parser_contract_version": {"const": "2.0.0"},
+    "status": {"type": "string", "enum": ["SUCCESS", "FAILED"]},
+    "filing_id": {"type": "string", "minLength": 1},
+    "source": {"type": "object", "required": ["sha256"], "properties": {"path": {"type": ["string", "null"]}, "sha256": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+    "runtime": {"type": "object", "required": ["worker_version", "python_version", "arelle_version"], "additionalProperties": true},
+    "taxonomy": {"type": "object", "required": ["target_namespace", "imports", "linkbase_references"], "additionalProperties": false, "properties": {"target_namespace": {"type": ["string", "null"]}, "imports": {"type": "array"}, "linkbase_references": {"type": "array"}, "statement_families": {"type": "array"}}},
+    "counts": {"type": "object", "required": ["contexts", "units", "dimensions", "facts"], "additionalProperties": false, "properties": {"contexts": {"type": "integer", "minimum": 0}, "units": {"type": "integer", "minimum": 0}, "dimensions": {"type": "integer", "minimum": 0}, "facts": {"type": "integer", "minimum": 0}}},
+    "contexts": {"type": "array"},
+    "units": {"type": "array"},
+    "dimensions": {"type": "array"},
+    "facts": {"type": "array", "items": {"$ref": "raw-fact.json"}},
+    "warnings": {"type": "array"},
+    "errors": {"type": "array"}
+  }
+}

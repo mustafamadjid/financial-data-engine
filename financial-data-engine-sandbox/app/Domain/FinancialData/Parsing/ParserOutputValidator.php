@@ -47,7 +47,18 @@ final class ParserOutputValidator
         $facts = $this->records($payload, 'facts');
         $warnings = $this->records($payload, 'warnings');
         $errors = $this->records($payload, 'errors');
+        $this->validateWarnings($warnings);
         $taxonomyEntryPoint = $this->optionalString($payload, 'taxonomy_entry_point');
+        $taxonomy = [];
+        if ($context->contractVersion === '2.0.0') {
+            $taxonomy = $this->object($payload, 'taxonomy');
+            foreach (['imports', 'import_locations', 'linkbase_roles', 'linkbase_references', 'statement_families'] as $key) {
+                if (! isset($taxonomy[$key]) || ! is_array($taxonomy[$key])) {
+                    throw new TerminalParserException('Parser taxonomy metadata is invalid.');
+                }
+            }
+            $this->optionalString($taxonomy, 'target_namespace');
+        }
 
         foreach ([
             'contexts' => $contexts,
@@ -63,7 +74,7 @@ final class ParserOutputValidator
         $contextIds = $this->validateContexts($contexts, $context->filingId);
         $unitIds = $this->validateUnits($units, $context->filingId);
         $this->validateDimensions($dimensions, $contextIds);
-        $this->validateFacts($facts, $context->filingId, $contextIds, $unitIds);
+        $this->validateFacts($facts, $context->filingId, $contextIds, $unitIds, $context->contractVersion === '2.0.0');
 
         return new ParsedFilingData(
             filingId: $context->filingId,
@@ -78,6 +89,7 @@ final class ParserOutputValidator
             warnings: $warnings,
             errors: $errors,
             taxonomyEntryPoint: $taxonomyEntryPoint,
+            taxonomy: $taxonomy,
         );
     }
 
@@ -143,6 +155,9 @@ final class ParserOutputValidator
                 throw new TerminalParserException('Parser context semantics are invalid.');
             }
 
+            if (isset($ids[$record['context_id']])) {
+                throw new TerminalParserException('Parser contains duplicate context identifiers.');
+            }
             $ids[$record['context_id']] = true;
         }
 
@@ -163,6 +178,9 @@ final class ParserOutputValidator
                 throw new TerminalParserException('Parser unit semantics are invalid.');
             }
 
+            if (isset($ids[$record['unit_id']])) {
+                throw new TerminalParserException('Parser contains duplicate unit identifiers.');
+            }
             $ids[$record['unit_id']] = true;
         }
 
@@ -172,6 +190,8 @@ final class ParserOutputValidator
     /** @param list<array<string, mixed>> $records @param array<string, true> $contextIds */
     private function validateDimensions(array $records, array $contextIds): void
     {
+        $ids = [];
+
         foreach ($records as $record) {
             foreach (['dimension_id', 'context_id', 'axis'] as $key) {
                 $this->requiredString($record, $key);
@@ -180,23 +200,54 @@ final class ParserOutputValidator
             if (! isset($contextIds[$record['context_id']])) {
                 throw new TerminalParserException('Parser dimension references an unknown context.');
             }
+
+            if (isset($ids[$record['dimension_id']])) {
+                throw new TerminalParserException('Parser contains duplicate dimension identifiers.');
+            }
+            $ids[$record['dimension_id']] = true;
         }
     }
 
     /** @param list<array<string, mixed>> $records @param array<string, true> $contextIds @param array<string, true> $unitIds */
-    private function validateFacts(array $records, string $filingId, array $contextIds, array $unitIds): void
+    private function validateFacts(array $records, string $filingId, array $contextIds, array $unitIds, bool $v2): void
     {
+        $ids = [];
+
         foreach ($records as $record) {
             foreach (['raw_fact_id', 'filing_id', 'source_concept', 'context_ref', 'raw_value', 'fact_status'] as $key) {
                 $this->requiredString($record, $key);
+            }
+            if ($v2) {
+                $this->requiredString($record, 'source_namespace');
+                $this->requiredString($record, 'source_element_id');
             }
 
             if ($record['filing_id'] !== $filingId || ! isset($contextIds[$record['context_ref']]) || ($record['unit_ref'] !== null && ! isset($unitIds[$record['unit_ref']])) || ! is_bool($record['is_nil'] ?? null) || ! in_array($record['fact_status'], ['EXTRACTED', 'UNSUPPORTED', 'PARSE_ERROR'], true)) {
                 throw new TerminalParserException('Parser fact semantics are invalid.');
             }
 
+            if (isset($ids[$record['raw_fact_id']])) {
+                throw new TerminalParserException('Parser contains duplicate fact identifiers.');
+            }
+            $ids[$record['raw_fact_id']] = true;
+
             if (isset($record['normalized_numeric_value']) && $record['normalized_numeric_value'] !== null && ! is_string($record['normalized_numeric_value'])) {
                 throw new TerminalParserException('Parser numeric value representation is invalid.');
+            }
+        }
+    }
+
+    /** @param list<array<string, mixed>> $records */
+    private function validateWarnings(array $records): void
+    {
+        foreach ($records as $record) {
+            $this->requiredString($record, 'code');
+            $this->requiredString($record, 'message');
+
+            foreach (['count', 'suppressed_count'] as $key) {
+                if (array_key_exists($key, $record) && (! is_int($record[$key]) || $record[$key] < 0)) {
+                    throw new TerminalParserException('Parser warning metadata is invalid.');
+                }
             }
         }
     }

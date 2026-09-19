@@ -1,0 +1,23 @@
+{
+  "contract": "mapping_rule",
+  "version": "2.0.0",
+  "description": "DA-1-3 aligned rule mapping an exact namespaced source concept to a canonical concept.",
+  "type": "object",
+  "required": ["mapping_rule_id", "source_namespace", "source_concept", "canonical_concept", "status", "dimension_policy", "rule_version"],
+  "additionalProperties": false,
+  "properties": {
+    "mapping_rule_id": {"type": "string", "minLength": 1},
+    "source_namespace": {"type": "string", "minLength": 1},
+    "source_concept": {"type": "string", "minLength": 1},
+    "entry_point": {"type": ["string", "null"]},
+    "canonical_concept": {"type": "string", "minLength": 1},
+    "allowed_scope": {"type": ["array", "null"], "items": {"type": "string"}},
+    "period_type": {"type": ["string", "null"], "enum": ["INSTANT", "DURATION", null]},
+    "dimension_policy": {"type": "string", "enum": ["UNDIMENSIONED_ONLY", "EXPLICIT_MEMBERS"]},
+    "sign_convention": {"type": ["string", "null"], "enum": ["AS_REPORTED", null]},
+    "status": {"type": "string", "enum": ["DRAFT", "APPROVED", "REJECTED", "REVIEW_REQUIRED"]},
+    "rationale": {"type": ["string", "null"]},
+    "reviewer": {"type": ["string", "null"]},
+    "rule_version": {"type": "integer", "minimum": 1}
+  }
+}

@@ -134,6 +134,9 @@ final class ReprocessAffectedFilings
                 if ($mapping->entry_point !== null && $fact->filing?->taxonomy_entry_point !== $mapping->entry_point) {
                     return false;
                 }
+                if ($mapping->source_namespace !== null && $mapping->source_namespace !== '' && $fact->source_namespace !== $mapping->source_namespace) {
+                    return false;
+                }
                 if (is_array($mapping->allowed_scope) && $mapping->allowed_scope !== [] && ! in_array($fact->context?->scope, $mapping->allowed_scope, true)) {
                     return false;
                 }

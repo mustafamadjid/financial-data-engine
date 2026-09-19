@@ -19,6 +19,7 @@ final class CreateMappingVersionRequest extends FormRequest
     {
         return [
             'source_concept' => ['required', 'string', 'max:255'],
+            'source_namespace' => ['nullable', 'string', 'max:255'],
             'entry_point' => ['nullable', 'string', 'max:255'],
             'canonical_concept' => ['required', 'string', 'max:100', Rule::exists('canonical_concepts', 'code')],
             'allowed_scope' => ['nullable', 'array'],

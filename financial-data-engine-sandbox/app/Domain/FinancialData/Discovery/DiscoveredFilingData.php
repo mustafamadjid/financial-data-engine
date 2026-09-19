@@ -36,6 +36,20 @@ final readonly class DiscoveredFilingData
 
     public ?string $discoveredAt;
 
+    public ?string $externalFilingId;
+
+    public ?string $revisionChainId;
+
+    public ?string $publicationTimestamp;
+
+    public bool $officialSourceAvailable;
+
+    public ?string $officialPdfUrl;
+
+    public ?string $officialXlsxUrl;
+
+    public ?string $officialIxbrlUrl;
+
     public function __construct(
         string $filingId,
         string $issuerCode,
@@ -51,6 +65,13 @@ final readonly class DiscoveredFilingData
         ?string $storagePath = null,
         ?string $supersedesFilingId = null,
         ?string $discoveredAt = null,
+        ?string $externalFilingId = null,
+        ?string $revisionChainId = null,
+        ?string $publicationTimestamp = null,
+        bool $officialSourceAvailable = false,
+        ?string $officialPdfUrl = null,
+        ?string $officialXlsxUrl = null,
+        ?string $officialIxbrlUrl = null,
     ) {
         $this->filingId = trim($filingId);
         $this->issuerCode = strtoupper(trim($issuerCode));
@@ -66,6 +87,13 @@ final readonly class DiscoveredFilingData
         $this->storagePath = $storagePath === null ? null : trim($storagePath);
         $this->supersedesFilingId = $supersedesFilingId === null ? null : trim($supersedesFilingId);
         $this->discoveredAt = $discoveredAt === null ? null : self::normaliseDateTime($discoveredAt);
+        $this->externalFilingId = self::nullableString($externalFilingId);
+        $this->revisionChainId = self::nullableString($revisionChainId);
+        $this->publicationTimestamp = $publicationTimestamp === null ? null : self::normaliseDateTime($publicationTimestamp);
+        $this->officialSourceAvailable = $officialSourceAvailable;
+        $this->officialPdfUrl = self::nullableString($officialPdfUrl);
+        $this->officialXlsxUrl = self::nullableString($officialXlsxUrl);
+        $this->officialIxbrlUrl = self::nullableString($officialIxbrlUrl);
 
         self::assertIdentifier($this->filingId, 'filing identifier');
         self::assertIdentifier($this->issuerCode, 'issuer code', 32);
@@ -120,7 +148,7 @@ final readonly class DiscoveredFilingData
         $allowed = [
             'filing_id', 'issuer_code', 'report_type', 'fiscal_year', 'fiscal_period',
             'period_start', 'period_end', 'source_url', 'source_type', 'storage_path',
-            'source_hash', 'revision_number', 'supersedes_filing_id', 'discovered_at',
+            'source_hash', 'revision_number', 'supersedes_filing_id', 'discovered_at', 'external_filing_id', 'revision_chain_id', 'publication_timestamp', 'official_source_available', 'official_pdf_url', 'official_xlsx_url', 'official_ixbrl_url',
         ];
         $unknown = array_diff(array_keys($attributes), $allowed);
 
@@ -165,6 +193,13 @@ final readonly class DiscoveredFilingData
             storagePath: self::nullableString($attributes['storage_path'] ?? null),
             supersedesFilingId: self::nullableString($attributes['supersedes_filing_id'] ?? null),
             discoveredAt: self::nullableString($attributes['discovered_at'] ?? null),
+            externalFilingId: self::nullableString($attributes['external_filing_id'] ?? null),
+            revisionChainId: self::nullableString($attributes['revision_chain_id'] ?? null),
+            publicationTimestamp: self::nullableString($attributes['publication_timestamp'] ?? null),
+            officialSourceAvailable: (bool) ($attributes['official_source_available'] ?? false),
+            officialPdfUrl: self::nullableString($attributes['official_pdf_url'] ?? null),
+            officialXlsxUrl: self::nullableString($attributes['official_xlsx_url'] ?? null),
+            officialIxbrlUrl: self::nullableString($attributes['official_ixbrl_url'] ?? null),
         );
     }
 
@@ -198,6 +233,13 @@ final readonly class DiscoveredFilingData
             'revision_number' => $this->revisionNumber,
             'supersedes_filing_id' => $this->supersedesFilingId,
             'discovered_at' => $this->discoveredAt,
+            'external_filing_id' => $this->externalFilingId,
+            'revision_chain_id' => $this->revisionChainId,
+            'publication_timestamp' => $this->publicationTimestamp,
+            'official_source_available' => $this->officialSourceAvailable,
+            'official_pdf_url' => $this->officialPdfUrl,
+            'official_xlsx_url' => $this->officialXlsxUrl,
+            'official_ixbrl_url' => $this->officialIxbrlUrl,
             'processing_stage' => 'DISCOVERED',
             'quality_status' => 'PENDING',
         ];

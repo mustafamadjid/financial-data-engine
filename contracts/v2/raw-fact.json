@@ -1,0 +1,23 @@
+{
+  "contract": "raw_fact",
+  "version": "2.0.0",
+  "description": "One immutable raw financial fact extracted from source XBRL with source element lineage.",
+  "type": "object",
+  "required": ["raw_fact_id", "filing_id", "source_concept", "source_namespace", "source_element_id", "context_ref", "raw_value", "is_nil", "fact_status"],
+  "additionalProperties": false,
+  "properties": {
+    "raw_fact_id": {"type": "string", "minLength": 1},
+    "filing_id": {"type": "string", "minLength": 1},
+    "source_concept": {"type": "string", "minLength": 1},
+    "source_namespace": {"type": "string", "minLength": 1},
+    "source_element_id": {"type": "string", "minLength": 1},
+    "raw_value": {"type": "string"},
+    "normalized_numeric_value": {"type": ["string", "null"]},
+    "context_ref": {"type": "string", "minLength": 1},
+    "unit_ref": {"type": ["string", "null"]},
+    "decimals": {"type": ["string", "null"]},
+    "precision": {"type": ["string", "null"]},
+    "is_nil": {"type": "boolean"},
+    "fact_status": {"type": "string", "enum": ["EXTRACTED", "UNSUPPORTED", "PARSE_ERROR"]}
+  }
+}

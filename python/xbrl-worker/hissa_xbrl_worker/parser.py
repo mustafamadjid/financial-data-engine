@@ -10,10 +10,14 @@ from .extractors.contexts import extract_contexts, build_context_id_map
 from .extractors.units import extract_units, build_unit_id_map
 from .extractors.dimensions import extract_dimensions
 from .extractors.facts import extract_facts
+from .extractors.taxonomy import extract_taxonomy
 from .log_context import get_log_context, set_log_context, LogContext
 from .logging_config import log_event
+import os
+import inspect
 
 logger = logging.getLogger(__name__)
+PARSER_CONTRACT_VERSION = os.getenv("HISSA_PARSER_CONTRACT_VERSION", "1.0.0")
 
 def _runtime():
     try:
@@ -24,7 +28,7 @@ def _runtime():
     return {"worker_version": WORKER_VERSION, "arelle_package": "arelle-release", "arelle_version": av, "python_version": platform.python_version()}
 
 def build_failure_payload(filing_id: str, input_path: Path, error_code: str, message: str, source_sha256: str | None = None):
-    return {"parser_contract": "xbrl_parser_result", "parser_contract_version": "1.0.0", "status": "FAILED", "filing_id": filing_id, "source": {"path": str(input_path), "sha256": source_sha256}, "runtime": _runtime(), "counts": {"contexts": 0, "units": 0, "dimensions": 0, "facts": 0}, "contexts": [], "units": [], "dimensions": [], "facts": [], "warnings": [], "errors": [{"code": error_code, "message": message}]}
+    return {"parser_contract": "xbrl_parser_result", "parser_contract_version": PARSER_CONTRACT_VERSION, "status": "FAILED", "filing_id": filing_id, "source": {"path": str(input_path), "sha256": source_sha256}, "runtime": _runtime(), "taxonomy": {"target_namespace": None, "imports": [], "import_locations": [], "linkbase_roles": [], "linkbase_references": [], "statement_families": []}, "counts": {"contexts": 0, "units": 0, "dimensions": 0, "facts": 0}, "contexts": [], "units": [], "dimensions": [], "facts": [], "warnings": [], "errors": [{"code": error_code, "message": message}]}
 
 def parse_filing(request: ParseRequest):
     started = time.perf_counter()
@@ -68,19 +72,26 @@ def parse_filing(request: ParseRequest):
                     log_event(logger, logging.ERROR, f"{event}_failed", f"{message} failed.", component="xbrl", error_code="EXTRACTION_ERROR", exception_type=type(exc).__name__)
                     raise
                 count_field = f"{name}_count"
-                log_event(logger, logging.DEBUG, f"{event}_completed", f"{message} completed.", component="xbrl", **{count_field: len(value), "duration_ms": round((time.perf_counter() - phase_started) * 1000, 3)})
+                measured = value[0] if isinstance(value, tuple) else value
+                log_event(logger, logging.DEBUG, f"{event}_completed", f"{message} completed.", component="xbrl", **{count_field: len(measured), "duration_ms": round((time.perf_counter() - phase_started) * 1000, 3)})
                 return value
 
             contexts = run_phase("contexts", lambda: extract_contexts(model, request.filing_id)); cmap = build_context_id_map(model, request.filing_id)
             units = run_phase("units", lambda: extract_units(model, request.filing_id)); umap = build_unit_id_map(model, request.filing_id)
             dimensions = run_phase("dimensions", lambda: extract_dimensions(model, request.filing_id, cmap))
-            facts = run_phase("facts", lambda: extract_facts(model, request.filing_id, cmap, umap))
+            if "return_metadata" in inspect.signature(extract_facts).parameters:
+                fact_result = run_phase("facts", lambda: extract_facts(model, request.filing_id, cmap, umap, return_metadata=True))
+                facts, warnings = fact_result
+            else:
+                facts = run_phase("facts", lambda: extract_facts(model, request.filing_id, cmap, umap))
+                warnings = []
+            taxonomy = extract_taxonomy(model)
         except WorkerError:
             raise
         except Exception as exc:
             log_event(logger, logging.ERROR, "extraction_failed", "XBRL extraction failed.", component="xbrl", error_code="EXTRACTION_ERROR", exception_type=type(exc).__name__)
             raise WorkerError("EXTRACTION_ERROR", "Unable to extract XBRL data.", 13) from exc
-    result = {"parser_contract": "xbrl_parser_result", "parser_contract_version": "1.0.0", "status": "SUCCESS", "filing_id": request.filing_id, "source": {"path": str(path), "sha256": source_hash}, "runtime": _runtime(), "counts": {"contexts": len(contexts), "units": len(units), "dimensions": len(dimensions), "facts": len(facts)}, "contexts": contexts, "units": units, "dimensions": dimensions, "facts": facts, "warnings": [], "errors": []}
+    result = {"parser_contract": "xbrl_parser_result", "parser_contract_version": PARSER_CONTRACT_VERSION, "status": "SUCCESS", "filing_id": request.filing_id, "source": {"path": str(path), "sha256": source_hash}, "runtime": _runtime(), "taxonomy": taxonomy, "counts": {"contexts": len(contexts), "units": len(units), "dimensions": len(dimensions), "facts": len(facts)}, "contexts": contexts, "units": units, "dimensions": dimensions, "facts": facts, "warnings": warnings, "errors": []}
     log_event(
         logger,
         logging.INFO,

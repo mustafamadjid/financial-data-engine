@@ -31,6 +31,11 @@ final class NormalizationService
                 && (string) $mapping->source_concept === (string) $rawFact->source_concept,
         ));
 
+        $candidates = array_values(array_filter(
+            $candidates,
+            fn (ConceptMapping $mapping): bool => $this->matchesSourceNamespace($rawFact, $mapping),
+        ));
+
         if ($candidates === []) {
             return $this->reviewOutcome($rawFact, 'No approved mapping exists for this source concept.', 'UNMAPPED');
         }
@@ -116,6 +121,7 @@ final class NormalizationService
             mappingRuleId: (string) $mapping->mapping_rule_id,
             mappingRuleVersion: (int) $mapping->rule_version,
             exceptionRuleVersion: $exceptionVersions === [] ? 'NONE' : implode(',', $exceptionVersions),
+            availabilityStatus: $rawFact->is_nil ? 'NIL' : ($value === null ? 'MISSING' : 'AVAILABLE'),
         );
     }
 
@@ -126,6 +132,11 @@ final class NormalizationService
         $filing = $rawFact->relationLoaded('filing') ? $rawFact->getRelation('filing') : null;
         $scope = $context?->scope;
         $periodType = strtoupper((string) ($context?->period_type ?? ''));
+
+        $dimensionPolicy = strtoupper(trim((string) ($mapping->dimension_policy ?? 'UNDIMENSIONED_ONLY')));
+        if ($dimensionPolicy === 'UNDIMENSIONED_ONLY' && $context?->relationLoaded('dimensions') && $context->dimensions->isNotEmpty()) {
+            return false;
+        }
 
         $entryPoint = trim((string) $mapping->entry_point);
         if ($entryPoint !== '' && ($filing === null || trim((string) $filing->taxonomy_entry_point) !== $entryPoint)) {
@@ -149,6 +160,14 @@ final class NormalizationService
         }
 
         return true;
+    }
+
+    private function matchesSourceNamespace(RawFact $rawFact, ConceptMapping $mapping): bool
+    {
+        $mappingNamespace = trim((string) ($mapping->source_namespace ?? ''));
+        $factNamespace = trim((string) ($rawFact->source_namespace ?? ''));
+
+        return $mappingNamespace === '' || $mappingNamespace === $factNamespace;
     }
 
     private function contextMismatchReason(RawFact $rawFact, ConceptMapping $mapping): string
@@ -220,6 +239,7 @@ final class NormalizationService
             mappingRuleId: null,
             mappingRuleVersion: null,
             reason: $reason,
+            availabilityStatus: $rawFact->is_nil ? 'NIL' : 'UNKNOWN',
         );
     }
 
