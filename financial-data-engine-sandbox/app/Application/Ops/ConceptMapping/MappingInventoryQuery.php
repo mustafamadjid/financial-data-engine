@@ -70,7 +70,7 @@ final class MappingInventoryQuery
             ->get();
         $rawSeries = RawFact::query()
             ->join('filings', 'filings.filing_id', '=', 'raw_facts.filing_id')
-            ->select(['raw_facts.source_concept', 'filings.taxonomy_entry_point'])
+            ->select(['raw_facts.source_concept', 'raw_facts.source_namespace', 'filings.taxonomy_entry_point'])
             ->distinct()
             ->get();
 
@@ -93,8 +93,9 @@ final class MappingInventoryQuery
 
         foreach ($rawSeries as $raw) {
             $sourceConcept = (string) $raw->source_concept;
+            $sourceNamespace = $raw->source_namespace === null ? null : (string) $raw->source_namespace;
             $entryPoint = $raw->taxonomy_entry_point === null ? null : (string) $raw->taxonomy_entry_point;
-            $seriesKey = MappingSeriesKey::from($sourceConcept, $entryPoint);
+            $seriesKey = MappingSeriesKey::from($sourceConcept, $entryPoint, $sourceNamespace);
 
             if ($series->has($seriesKey)) {
                 continue;
@@ -103,6 +104,7 @@ final class MappingInventoryQuery
             $series->put($seriesKey, [
                 'mappingSeriesKey' => $seriesKey,
                 'sourceConcept' => $sourceConcept,
+                'sourceNamespace' => $sourceNamespace,
                 'entryPoint' => $entryPoint,
                 'currentMapping' => null,
             ]);
@@ -244,6 +246,7 @@ final class MappingInventoryQuery
             'reviewer' => $mapping->reviewer,
             'version' => (int) $mapping->rule_version,
             'sourceConcept' => (string) $mapping->source_concept,
+            'sourceNamespace' => $mapping->source_namespace,
             'entryPoint' => $mapping->entry_point,
             'allowedScope' => $mapping->allowed_scope,
             'periodType' => $mapping->period_type,
@@ -264,6 +267,9 @@ final class MappingInventoryQuery
             ->get()
             ->filter(function (RawFact $fact) use ($entryPoint, $mapping): bool {
                 if ($entryPoint !== null && $fact->filing?->taxonomy_entry_point !== $entryPoint) {
+                    return false;
+                }
+                if (($mapping['sourceNamespace'] ?? null) !== null && $fact->source_namespace !== $mapping['sourceNamespace']) {
                     return false;
                 }
 
@@ -288,6 +294,9 @@ final class MappingInventoryQuery
         if ($mapping->entry_point !== null && $mapping->entry_point !== '' && $fact->filing?->taxonomy_entry_point !== $mapping->entry_point) {
             return false;
         }
+        if ($mapping->source_namespace !== null && $mapping->source_namespace !== '' && $fact->source_namespace !== $mapping->source_namespace) {
+            return false;
+        }
 
         $allowedScope = $mapping->allowed_scope;
         if (is_array($allowedScope) && $allowedScope !== [] && ! in_array($fact->context?->scope, $allowedScope, true)) {
@@ -299,7 +308,7 @@ final class MappingInventoryQuery
 
     private function seriesKey(ConceptMapping $mapping): string
     {
-        return (string) ($mapping->mapping_series_key ?: MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point));
+        return (string) ($mapping->mapping_series_key ?: MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point, $mapping->source_namespace));
     }
 
     /** @return array{allowed: bool, reasonCode: string|null, reason: string|null} */

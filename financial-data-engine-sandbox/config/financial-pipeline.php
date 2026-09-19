@@ -130,11 +130,18 @@ return [
     'normalization' => [
         'version' => env('FINANCIAL_PIPELINE_NORMALIZATION_VERSION', '1.0.0'),
         'mapping_version' => env('FINANCIAL_PIPELINE_MAPPING_VERSION'),
+        'batch_size' => (int) env('FINANCIAL_PIPELINE_NORMALIZATION_BATCH_SIZE', 1000),
     ],
 
     'validation' => [
         'rule_set_version' => env('FINANCIAL_PIPELINE_VALIDATION_RULE_SET_VERSION'),
         'rules' => [],
+        'mandatory_rule_codes' => [
+            'ACC-001', 'HRY-001', 'HRY-002', 'HRY-003', 'HRY-004', 'HRY-005', 'HRY-006',
+            'CTX-001', 'CTX-002', 'CTX-003', 'CTX-004',
+            'SCL-001', 'SCL-002', 'SCL-003', 'SCL-004', 'SCL-005',
+            'CRX-001', 'CRX-002', 'SCP-001', 'SCP-002',
+        ],
     ],
 
     'publish' => [

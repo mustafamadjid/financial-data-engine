@@ -1,6 +1,7 @@
 from ..ids import make_fact_id
 from ..numeric import parse_decimal_lexical
 import logging
+import hashlib
 from ..logging_config import log_event
 
 logger = logging.getLogger(__name__)
@@ -9,7 +10,23 @@ def _concept(fact):
     q = getattr(fact, "qname", None); ns = getattr(q, "namespaceURI", None); local = getattr(q, "localName", None) or getattr(getattr(fact, "concept", None), "name", "")
     return local, ns
 
-def extract_facts(model_xbrl, filing_id: str, context_id_map: dict[str, str], unit_id_map: dict[str, str]):
+def _source_element_id(fact, fingerprint: str) -> str:
+    for attribute in ("id", "xml_id", "source_element_id"):
+        value = getattr(fact, attribute, None)
+        if value:
+            return str(value)
+    object_id = getattr(fact, "objectId", None)
+    if callable(object_id):
+        try:
+            value = object_id()
+            if value:
+                return str(value)
+        except Exception:
+            pass
+    return "derived-" + hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:32]
+
+
+def extract_facts(model_xbrl, filing_id: str, context_id_map: dict[str, str], unit_id_map: dict[str, str], *, return_metadata: bool = False):
     candidates = []
     warning_counts = {}
     for fact in getattr(model_xbrl, "facts", ()):
@@ -39,8 +56,12 @@ def extract_facts(model_xbrl, filing_id: str, context_id_map: dict[str, str], un
                     source_unit_id=unit_source,
                     error_code="FACT_PARSE_ERROR",
                 )
-        result.append({"raw_fact_id": make_fact_id(fp, occurrence), "filing_id": filing_id, "source_concept": local, "source_namespace": ns, "raw_value": raw, "normalized_numeric_value": numeric_value, "context_ref": context_id_map[context_source], "unit_ref": unit_id_map.get(unit_source) if unit_source else None, "decimals": str(getattr(fact, "decimals", "")) if getattr(fact, "decimals", None) is not None else None, "precision": str(getattr(fact, "precision", "")) if getattr(fact, "precision", None) is not None else None, "is_nil": nil, "fact_status": status})
+        result.append({"raw_fact_id": make_fact_id(fp, occurrence), "source_element_id": _source_element_id(fact, fp), "filing_id": filing_id, "source_concept": local, "source_namespace": ns, "raw_value": raw, "normalized_numeric_value": numeric_value, "context_ref": context_id_map[context_source], "unit_ref": unit_id_map.get(unit_source) if unit_source else None, "decimals": str(getattr(fact, "decimals", "")) if getattr(fact, "decimals", None) is not None else None, "precision": str(getattr(fact, "precision", "")) if getattr(fact, "precision", None) is not None else None, "is_nil": nil, "fact_status": status})
     for warning_type, count in warning_counts.items():
         if count > 20:
             log_event(logger, logging.WARNING, "fact_warning_suppressed", "Repeated fact warnings were suppressed.", component="xbrl", filing_id=filing_id, warning_type=warning_type, suppressed_count=count - 20)
-    return sorted(result, key=lambda x: x["raw_fact_id"])
+    ordered = sorted(result, key=lambda x: x["raw_fact_id"])
+    if return_metadata:
+        warnings = [{"code": code, "message": "One or more numeric facts could not be parsed.", "count": count, "suppressed_count": max(0, count - 20)} for code, count in warning_counts.items()]
+        return ordered, warnings
+    return ordered

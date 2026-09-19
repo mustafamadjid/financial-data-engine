@@ -16,6 +16,7 @@ final class CreateMappingVersionController extends Controller
         try {
             $mapping = $createMappingVersion->execute($mappingSeries, [
                 'source_concept' => (string) $request->validated('source_concept'),
+                'source_namespace' => $request->validated('source_namespace'),
                 'entry_point' => $request->validated('entry_point'),
                 'canonical_concept' => (string) $request->validated('canonical_concept'),
                 'allowed_scope' => $request->validated('allowed_scope'),
@@ -45,6 +46,7 @@ final class CreateMappingVersionController extends Controller
             'mappingRuleId' => (string) $mapping->mapping_rule_id,
             'mappingSeriesKey' => (string) $mapping->mapping_series_key,
             'sourceConcept' => (string) $mapping->source_concept,
+            'sourceNamespace' => $mapping->source_namespace,
             'entryPoint' => $mapping->entry_point,
             'canonicalConcept' => [
                 'code' => (string) $mapping->canonicalConcept->code,

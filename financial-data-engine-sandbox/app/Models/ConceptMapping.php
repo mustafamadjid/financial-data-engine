@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['mapping_rule_id', 'mapping_series_key', 'supersedes_mapping_rule_id', 'source_concept', 'entry_point', 'canonical_concept', 'allowed_scope', 'period_type', 'sign_convention', 'status', 'rationale', 'reviewer', 'evidence_ids', 'created_by', 'rule_version'])]
+#[Fillable(['mapping_rule_id', 'mapping_series_key', 'supersedes_mapping_rule_id', 'source_concept', 'source_namespace', 'entry_point', 'canonical_concept', 'allowed_scope', 'period_type', 'dimension_policy', 'sign_convention', 'status', 'rationale', 'reviewer', 'evidence_ids', 'created_by', 'rule_version'])]
 class ConceptMapping extends Model
 {
     protected $primaryKey = 'mapping_rule_id';
@@ -21,7 +21,7 @@ class ConceptMapping extends Model
     {
         static::creating(function (self $mapping): void {
             if (trim((string) $mapping->mapping_series_key) === '') {
-                $mapping->mapping_series_key = MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point);
+                $mapping->mapping_series_key = MappingSeriesKey::from((string) $mapping->source_concept, $mapping->entry_point, $mapping->source_namespace);
             }
 
             if (trim((string) $mapping->created_by) === '') {

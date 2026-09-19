@@ -1,0 +1,19 @@
+{
+  "contract": "normalized_fact",
+  "version": "2.0.0",
+  "type": "object",
+  "required": ["normalized_fact_id", "raw_fact_id", "canonical_concept", "value", "availability_status", "normalization_version", "validation_status"],
+  "additionalProperties": false,
+  "properties": {
+    "normalized_fact_id": {"type": "string", "minLength": 1},
+    "raw_fact_id": {"type": "string", "minLength": 1},
+    "canonical_concept": {"type": "string", "minLength": 1},
+    "value": {"type": ["string", "null"]},
+    "availability_status": {"type": "string", "enum": ["AVAILABLE", "NIL", "MISSING", "NOT_APPLICABLE", "UNKNOWN"]},
+    "currency": {"type": ["string", "null"]},
+    "scope": {"type": ["string", "null"]},
+    "normalization_version": {"type": "string", "minLength": 1},
+    "normalized_dataset_version": {"type": ["string", "null"]},
+    "validation_status": {"type": "string", "enum": ["PENDING", "VERIFIED", "REVIEW_REQUIRED", "FAILED"]}
+  }
+}

@@ -3,6 +3,7 @@
 namespace App\Domain\FinancialData\Publishing;
 
 use App\Models\Filing;
+use App\Models\NormalizedFact;
 use App\Models\ValidationResult;
 
 final class PublishLimitationsCollector
@@ -55,6 +56,22 @@ final class PublishLimitationsCollector
             })
             ->values()
             ->all();
+
+        $availabilityItems = NormalizedFact::query()
+            ->where('filing_id', $filing->filing_id)
+            ->where('normalized_dataset_version', $normalizedDatasetVersion)
+            ->whereNotIn('availability_status', ['AVAILABLE'])
+            ->orderBy('normalized_fact_id')
+            ->get(['normalized_fact_id', 'availability_status'])
+            ->map(fn (NormalizedFact $fact): array => [
+                'code' => 'AVAILABILITY_'.(string) $fact->availability_status,
+                'severity' => 'WARN',
+                'message' => 'Published fact availability is '.strtolower((string) $fact->availability_status).'.',
+                'references' => [(string) $fact->normalized_fact_id],
+            ])
+            ->all();
+        $items = array_merge($items, $availabilityItems);
+        usort($items, fn (array $left, array $right): int => [$left['code'], $left['references']] <=> [$right['code'], $right['references']]);
 
         usort($unmappedConcepts, fn (array $left, array $right): int => [$left['source_concept'], $left['source_reference']] <=> [$right['source_concept'], $right['source_reference']]);
 

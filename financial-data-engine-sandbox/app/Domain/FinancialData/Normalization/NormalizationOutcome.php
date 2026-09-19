@@ -18,6 +18,7 @@ final readonly class NormalizationOutcome
         public ?int $mappingRuleVersion,
         public ?string $reason = null,
         public string $exceptionRuleVersion = 'NONE',
+        public string $availabilityStatus = 'UNKNOWN',
     ) {}
 
     public function isNormalized(): bool

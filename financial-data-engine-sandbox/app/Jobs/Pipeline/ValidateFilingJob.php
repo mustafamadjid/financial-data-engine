@@ -11,6 +11,7 @@ use App\Domain\FinancialData\Validation\FilingQualityAggregator;
 use App\Domain\FinancialData\Validation\FilingValidationContext;
 use App\Domain\FinancialData\Validation\ValidationEngine;
 use App\Domain\FinancialData\Validation\ValidationEvaluation;
+use App\Domain\FinancialData\Validation\ValidationRuleSetManifest;
 use App\Jobs\Middleware\PipelineOverlapMiddleware;
 use App\Models\AuditLog;
 use App\Models\Filing;
@@ -73,6 +74,7 @@ final class ValidateFilingJob extends PipelineJob
         $normalizedFacts = NormalizedFact::query()
             ->where('filing_id', $filing->filing_id)
             ->where('normalization_version', $normalizationVersion)
+            ->with(['canonicalConcept', 'rawFact.context.dimensions', 'rawFact.unit'])
             ->orderBy('normalized_fact_id')
             ->get();
 
@@ -80,6 +82,7 @@ final class ValidateFilingJob extends PipelineJob
             $legacyFacts = NormalizedFact::query()
                 ->where('filing_id', $filing->filing_id)
                 ->where('normalization_version', $normalizationBaseVersion)
+                ->with(['canonicalConcept', 'rawFact.context.dimensions', 'rawFact.unit'])
                 ->orderBy('normalized_fact_id')
                 ->get();
 
@@ -147,6 +150,21 @@ final class ValidateFilingJob extends PipelineJob
         ]);
 
         try {
+            $enabledRuleCodes = ValidationRule::query()
+                ->where('enabled', true)
+                ->pluck('rule_code')
+                ->map(fn (mixed $code): string => (string) $code)
+                ->values();
+            if ($enabledRuleCodes->isEmpty()) {
+                throw new TerminalValidationException('No enabled validation rules are configured.');
+            }
+
+            $mandatoryRuleCodes = collect(ValidationRuleSetManifest::mandatoryCodes());
+            $configuredDaRules = $enabledRuleCodes->intersect($mandatoryRuleCodes);
+            if ($configuredDaRules->isNotEmpty()) {
+                ValidationRuleSetManifest::assertComplete($enabledRuleCodes->all());
+            }
+
             $context = new FilingValidationContext(
                 filing: $filing,
                 normalizedFacts: $normalizedFacts->all(),
@@ -184,8 +202,8 @@ final class ValidateFilingJob extends PipelineJob
                     );
                 }
 
-                $normalizedFacts->each(function (NormalizedFact $normalizedFact) use ($qualityStatus): void {
-                    $normalizedFact->forceFill(['validation_status' => $qualityStatus->value])->save();
+                $normalizedFacts->each(function (NormalizedFact $normalizedFact) use ($qualityStatus, $normalizedDatasetVersion): void {
+                    $normalizedFact->forceFill(['validation_status' => $qualityStatus->value, 'normalized_dataset_version' => $normalizedDatasetVersion])->save();
                 });
                 $current->forceFill([
                     'processing_stage' => PipelineStage::Validated->value,

@@ -32,7 +32,7 @@ final readonly class ConfiguredValidationRule implements ValidationRule
 
         return new RuleResult(
             result: $result->result,
-            severity: $this->definition->severity,
+            severity: $result->severity === 'INFO' ? 'INFO' : $this->definition->severity,
             message: $result->message,
             expectedValue: $result->expectedValue,
             actualValue: $result->actualValue,

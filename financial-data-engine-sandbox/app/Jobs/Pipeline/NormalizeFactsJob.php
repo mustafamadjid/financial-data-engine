@@ -4,7 +4,9 @@ namespace App\Jobs\Pipeline;
 
 use App\Application\Pipeline\PipelineOrchestrator;
 use App\Domain\FinancialData\Mapping\MappingSeriesKey;
+use App\Domain\FinancialData\Metadata\FilingMetadataResolver;
 use App\Domain\FinancialData\Normalization\Exceptions\TerminalNormalizationException;
+use App\Domain\FinancialData\Normalization\NormalizationOutcome;
 use App\Domain\FinancialData\Normalization\NormalizationService;
 use App\Domain\FinancialData\Pipeline\PipelineIdempotencyKey;
 use App\Domain\FinancialData\Pipeline\PipelineStage;
@@ -54,6 +56,7 @@ final class NormalizeFactsJob extends PipelineJob
     public function handle(
         NormalizationService $normalizationService,
         NormalizedFilingPersistence $persistence,
+        FilingMetadataResolver $metadataResolver,
         MappingVersionResolver $mappingVersionResolver,
         JobExecutionRecorder $executionRecorder,
         PipelineExecutionLogger $pipelineLogger,
@@ -66,12 +69,27 @@ final class NormalizeFactsJob extends PipelineJob
         }
 
         $normalizationBaseVersion = trim((string) config('financial-pipeline.normalization.version', '1.0.0'));
-        $rawFacts = RawFact::query()
+        $metadataFacts = RawFact::query()
             ->where('filing_id', $filing->filing_id)
-            ->with(['filing', 'context', 'unit'])
+            ->with(['filing', 'context.dimensions', 'unit'])
+            ->where(function ($query): void {
+                $query->where('source_namespace', 'like', '%/dei')->orWhereNull('source_namespace');
+            })
             ->orderBy('raw_fact_id')
             ->get();
-        $rawExtractionVersion = $this->rawExtractionVersion($rawFacts);
+        $metadata = $metadataResolver->resolve($filing, $metadataFacts);
+        if ($metadata->isResolved()) {
+            DB::transaction(function () use ($filing, $metadata): void {
+                $filing->forceFill(['presentation_currency' => $metadata->presentationCurrency])->save();
+                $filing->xbrlContexts()->update(['scope' => $metadata->scope]);
+            });
+            $metadataFacts->each(function (RawFact $rawFact) use ($metadata): void {
+                if ($rawFact->relationLoaded('context') && $rawFact->context !== null) {
+                    $rawFact->context->scope = $metadata->scope;
+                }
+            });
+        }
+        $rawExtractionVersion = $this->rawExtractionVersion($filing->filing_id);
         $mappings = $this->mappingsForCurrentVersion();
         $mappingVersion = $mappingVersionResolver->resolve();
         $normalizationVersion = $normalizationBaseVersion.'@'.$mappingVersion;
@@ -132,23 +150,31 @@ final class NormalizeFactsJob extends PipelineJob
         ]);
 
         try {
-            $records = [];
-
-            foreach ($rawFacts as $rawFact) {
-                $records[] = [
+            $summary = ['normalized_count' => 0, 'review_count' => 0];
+            $batch = [];
+            $batchCount = 0;
+            $startedAt = microtime(true);
+            $batchSize = max(1, (int) config('financial-pipeline.normalization.batch_size', 1000));
+            foreach (RawFact::query()->where('filing_id', $filing->filing_id)->with(['filing', 'context.dimensions', 'unit'])->orderBy('raw_fact_id')->lazyById($batchSize, 'raw_fact_id') as $rawFact) {
+                $batch[] = [
                     'rawFact' => $rawFact,
-                    'outcome' => $normalizationService->normalize(
-                        $rawFact,
-                        $mappings[(string) $rawFact->source_concept] ?? [],
-                        $normalizationVersion,
-                    ),
+                    'outcome' => $normalizationService->normalize($rawFact, $mappings[(string) $rawFact->source_concept] ?? [], $normalizationVersion),
                 ];
+                if (count($batch) >= $batchSize) {
+                    $summary = $this->persistBatch($filing, $batch, $normalizationVersion, $persistence, $jobRun->correlation_id, $summary);
+                    $batchCount++;
+                    $batch = [];
+                }
+            }
+            if ($batch !== []) {
+                $summary = $this->persistBatch($filing, $batch, $normalizationVersion, $persistence, $jobRun->correlation_id, $summary);
+                $batchCount++;
             }
 
-            DB::transaction(function () use ($filing, $records, $normalizationVersion, $persistence, $executionRecorder, $jobRun, $orchestrator, $mappingVersion, $rawExtractionVersion): void {
+            DB::transaction(function () use ($filing, $summary, $batchCount, $startedAt, $normalizationVersion, $executionRecorder, $jobRun, $orchestrator, $mappingVersion, $rawExtractionVersion, $metadata): void {
                 $current = Filing::query()->lockForUpdate()->findOrFail($filing->filing_id);
-                $summary = $persistence->persist($current, $records, $normalizationVersion, $jobRun->correlation_id);
-                $qualityStatus = $summary['review_count'] > 0 ? 'REVIEW_REQUIRED' : 'PENDING';
+                $metadataReview = $metadata->status === 'REVIEW_REQUIRED' && $metadata->evidenceRawFactIds !== [];
+                $qualityStatus = $summary['review_count'] > 0 || $metadataReview ? 'REVIEW_REQUIRED' : 'PENDING';
                 $current->forceFill([
                     'processing_stage' => PipelineStage::Normalized->value,
                     'quality_status' => $qualityStatus,
@@ -167,6 +193,8 @@ final class NormalizeFactsJob extends PipelineJob
                         'normalized_count' => $summary['normalized_count'],
                         'review_count' => $summary['review_count'],
                         'quality_status' => $qualityStatus,
+                        'batch_count' => $batchCount,
+                        'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
                     ],
                     'rationale' => 'Raw facts were normalized using approved, versioned mappings.',
                     'filing_id' => $current->filing_id,
@@ -226,14 +254,28 @@ final class NormalizeFactsJob extends PipelineJob
     /**
      * @param  Collection<int, RawFact>  $rawFacts
      */
-    private function rawExtractionVersion(Collection $rawFacts): string
+    private function rawExtractionVersion(string $filingId): string
     {
-        $identity = $rawFacts->map(fn (RawFact $rawFact): string => implode(':', [
-            $rawFact->raw_fact_id,
-            (string) $rawFact->parser_version,
-            (string) $rawFact->parser_config_version,
-        ]))->all();
+        $identity = [];
+        foreach (RawFact::query()->where('filing_id', $filingId)->orderBy('raw_fact_id')->cursor() as $rawFact) {
+            $identity[] = implode(':', [
+                $rawFact->raw_fact_id,
+                (string) $rawFact->parser_version,
+                (string) $rawFact->parser_config_version,
+            ]);
+        }
 
         return $identity === [] ? 'empty' : 'raw_'.substr(hash('sha256', implode('|', $identity)), 0, 32);
+    }
+
+    /** @param list<array{rawFact: RawFact, outcome: NormalizationOutcome}> $records @param array{normalized_count:int,review_count:int} $summary @return array{normalized_count:int,review_count:int} */
+    private function persistBatch(Filing $filing, array $records, string $normalizationVersion, NormalizedFilingPersistence $persistence, ?string $correlationId, array $summary): array
+    {
+        $batchSummary = DB::transaction(fn (): array => $persistence->persist($filing, $records, $normalizationVersion, $correlationId));
+
+        return [
+            'normalized_count' => $summary['normalized_count'] + $batchSummary['normalized_count'],
+            'review_count' => $summary['review_count'] + $batchSummary['review_count'],
+        ];
     }
 }

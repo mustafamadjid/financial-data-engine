@@ -1,0 +1,6 @@
+{
+  "contract": "status_enums",
+  "version": "2.0.0",
+  "availability_status": ["AVAILABLE", "NIL", "MISSING", "NOT_APPLICABLE", "UNKNOWN"],
+  "workflow_quality_status": ["PENDING", "VERIFIED", "REVIEW_REQUIRED", "FAILED"]
+}

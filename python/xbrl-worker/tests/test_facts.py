@@ -81,3 +81,24 @@ def test_extract_facts_assigns_distinct_ids_to_duplicate_facts():
 
     assert len({record["raw_fact_id"] for record in records}) == 2
     assert records == sorted(records, key=lambda item: item["raw_fact_id"])
+
+
+def test_extract_facts_preserves_stable_source_element_id_when_fact_has_xml_id():
+    fact = _fact()
+    fact.id = "fact-xml-001"
+    model = SimpleNamespace(facts=[fact])
+
+    first = extract_facts(model, "filing-1", {"c1": "ctx-1"}, {"u1": "unit-1"})
+    second = extract_facts(model, "filing-1", {"c1": "ctx-1"}, {"u1": "unit-1"})
+
+    assert first[0]["source_element_id"] == "fact-xml-001"
+    assert first[0]["source_element_id"] == second[0]["source_element_id"]
+
+
+def test_extract_facts_returns_structured_warning_suppression_metadata():
+    model = SimpleNamespace(facts=[_fact(raw=f"bad-{index}") for index in range(25)])
+
+    records, warnings = extract_facts(model, "filing-1", {"c1": "ctx-1"}, {"u1": "unit-1"}, return_metadata=True)
+
+    assert len(records) == 25
+    assert warnings == [{"code": "FACT_PARSE_ERROR", "message": "One or more numeric facts could not be parsed.", "count": 25, "suppressed_count": 5}]

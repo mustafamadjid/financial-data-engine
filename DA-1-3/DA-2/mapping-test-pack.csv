@@ -1,0 +1,15 @@
+test_id,entry_point,ticker,period,source_concept,canonical_concept,current_context,expected_unit,expected_is_nil,expected_value_raw
+T001,.../ep/E24/general,ANTM,2026Q2,CashAndCashEquivalents,cash_and_cash_equivalents,CurrentYearInstant,IDR,false,9226074000000
+T002,.../ep/E24/general,ANTM,2026Q2,Assets,total_assets,CurrentYearInstant,IDR,false,61272871000000
+T003,.../ep/E24/general,ANTM,2026Q2,SalesAndRevenue,revenue,CurrentYearDuration,IDR,false,62714280000000
+T004,.../ep/E24/general,ANTM,2026Q2,ProfitLoss,profit_loss,CurrentYearDuration,IDR,false,6912857000000
+T005,.../ep/E24/general,ANTM,2026Q2,NetCashFlowsReceivedFromUsedInOperatingActivities,cash_flow_operating,CurrentYearDuration,IDR,false,-751862000000
+T006,.../ep/E24/financesharia,BBCA,2026Q2,Assets,total_assets,CurrentYearInstant,IDR,false,1660579336000000
+T007,.../ep/E24/financesharia,BBCA,2026Q2,ProfitLoss,profit_loss,CurrentYearDuration,IDR,false,29545621000000
+T008,.../ep/E24/financesharia,BBCA,2026Q2,NetCashFlowsReceivedFromUsedInOperatingActivities,cash_flow_operating,CurrentYearDuration,IDR,false,32261974000000
+T009,.../ep/E24/infrastructure,TLKM,2026Q2,CashAndCashEquivalents,cash_and_cash_equivalents,CurrentYearInstant,IDR,false,54579000000000
+T010,.../ep/E24/infrastructure,TLKM,2026Q2,Assets,total_assets,CurrentYearInstant,IDR,false,303087000000000
+T011,.../ep/E24/infrastructure,TLKM,2026Q2,SalesAndRevenue,revenue,CurrentYearDuration,IDR,false,75878000000000
+T012,.../ep/E24/infrastructure,TLKM,2026Q2,ProfitLoss,profit_loss,CurrentYearDuration,IDR,false,14206000000000
+T013,.../ep/E24/infrastructure,TLKM,2026Q2,NetCashFlowsReceivedFromUsedInOperatingActivities,cash_flow_operating,CurrentYearDuration,IDR,false,34862000000000
+T014,.../ep/E24/financesharia,BBCA,2026Q2,TemporarySyirkahFunds,temporary_syirkah_funds,CurrentYearInstant,IDR,false,10399709000000

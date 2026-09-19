@@ -7,6 +7,7 @@ use App\Models\ConceptMapping;
 use App\Models\Filing;
 use App\Models\RawFact;
 use App\Models\XbrlContext;
+use App\Models\XbrlDimension;
 use App\Models\XbrlUnit;
 use Tests\TestCase;
 
@@ -172,4 +173,33 @@ it('applies a versioned exception rule after the mapping sign convention', funct
     expect($outcome->status)->toBe('NORMALIZED')
         ->and($outcome->value)->toBe('-100.000000000000000000')
         ->and($outcome->exceptionRuleVersion)->toBe('EX-NEGATE@1');
+});
+
+it('keeps XBRL nil distinct from explicit zero', function () {
+    $nil = normalizationRawFact(value: '0');
+    $nil->forceFill(['is_nil' => true, 'normalized_numeric_value' => null, 'raw_value' => '']);
+    $nilOutcome = (new NormalizationService)->normalize($nil, [normalizationMapping()], '1.0.0');
+    $zeroOutcome = (new NormalizationService)->normalize(normalizationRawFact(value: '0'), [normalizationMapping()], '1.0.0');
+
+    expect($nilOutcome->value)->toBeNull()
+        ->and($nilOutcome->availabilityStatus)->toBe('NIL')
+        ->and($zeroOutcome->value)->toBe('0.000000000000000000')
+        ->and($zeroOutcome->availabilityStatus)->toBe('AVAILABLE');
+});
+
+it('does not match the same local concept from a different namespace', function () {
+    $rawFact = normalizationRawFact();
+    $rawFact->source_namespace = 'urn:source:a';
+    $mapping = normalizationMapping();
+    $mapping->source_namespace = 'urn:source:b';
+
+    expect((new NormalizationService)->normalize($rawFact, [$mapping], '1.0.0')->status)->toBe('UNMAPPED');
+});
+
+it('rejects dimensioned facts for an undimensioned mapping policy', function () {
+    $rawFact = normalizationRawFact();
+    $context = $rawFact->getRelation('context');
+    $context->setRelation('dimensions', collect([new XbrlDimension(['axis' => 'SegmentAxis', 'member' => 'SegmentMember'])]));
+
+    expect((new NormalizationService)->normalize($rawFact, [normalizationMapping()], '1.0.0')->status)->toBe('REVIEW_REQUIRED');
 });

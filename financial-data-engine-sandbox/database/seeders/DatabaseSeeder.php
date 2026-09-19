@@ -15,5 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // No application authentication data is seeded.
+        // DA validation rules are installed explicitly with ValidationRuleSeeder
+        // after the DA artifact version has been approved for the environment.
     }
 }
